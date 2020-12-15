@@ -4,154 +4,110 @@ if( params.help ) {
 	return help()
 }
 
-blastdb_name = file(params.db).name
-blastdb_dir = file(params.db).parent
+reference_db = file(params.db)
 threads = params.threads
-timeseries = params.timeseries
+forks = params.forks
 
-/*
-screen_file = file(params.screen)
-*/
 
 Channel
-    .fromFilePairs( params.reads, size: 1 ) { file -> file.getSimpleName() }
-	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-    .into { long_reads_fasta; long_reads_fastq }
+    .fromPath( params.reads )
+    .map{ in -> tuple("$in", in.getSimpleName(), file(in)) }
+    .into{ fastq_barcodes; fastq_nobarcodes }
 
 
-process FastqToFasta {
-	tag {file_id}
-
+process BwaIndexReference {
 	input:
-		set file_id, file(reads) from long_reads_fastq
+		path db_dir from reference_db
 	output:
-		set file_id, file("${file_id}.fasta") into (fasta_from_fastq)
-
-	when:
-		isFastq(reads)
+		file '*' into (asfv_reference)
 
 	"""
-	fastq_to_fasta.py $reads > ${file_id}.fasta
+	bwa index $db_dir
 	"""
 }
 
 
-process FastaToFasta {
-	tag {file_id}
-
-	input:
-		set file_id, file(reads) from long_reads_fasta
-	output:
-		set file_id, file("${file_id}.fasta") into (fasta_from_fasta)
-
-	when:
-		isFasta(reads)
-
-	"""
-	if [ ! -f ${file_id}.fasta ]; then
-		cp $reads ${file_id}.fasta
-	fi
-	"""
-}
-
-
-process NucBlast {
+process BwaAlignNoBarcodes {
     tag {file_id}
-    
-    publishDir "${params.output}/BlastResults", mode: "symlink"
-    
+
     input:
-        set file_id, file(reads) from fasta_from_fastq.mix(fasta_from_fasta)
-		path db_dir from blastdb_dir
-    output:
-        file("${file_id}_blast.sam") into (overall_data, timeseries_data)
-    
-    """
-	blastn -db $db_dir/$blastdb_name -query $reads -out ${file_id}_blast.sam -num_threads $threads \
-	-num_alignments 100000 -outfmt "17 SQ SR" -parse_deflines
-    """
-}
-
-
-process CombineSamFiles {
-	input:
-		val(sam_list) from overall_data.toList()
+        set full_name, file_id, path(reads) from fastq_nobarcodes
+        file(index) from asfv_reference
+		file(reference_db)
 	output:
-		file("aligned_reads.sam") into (all_coverage)
-
-	"""
-	merge_sam_files.py ${sam_list} > aligned_reads.sam
-	"""
-}
-
-
-process OverallAnalysis {
-	publishDir "${params.output}/OverallResults", mode: "copy"
-
-	input:
-		file(all_sam) from all_coverage
-	output:
-		file("overall_coverage_report.csv")
-		file("top_genomic_targets.pdf")
-		file("aligned_reads.fasta")
-
-	"""
-	sam_parser.py -i $all_sam -oc overall_coverage_report.csv -op top_genomic_targets.pdf -r > aligned_reads.fasta
-	"""
-}
-
-
-process TimeSeriesAnalysis {
-	publishDir "${params.output}/TimeSeriesResults", mode: "copy"
-
-	input:
-		val(file_list) from timeseries_data.toList()
-	output:
-		file("time_series_results.pdf")
-		file("time_series_results.csv")
+		file("*${file_id}.sam") into (final_data1, coverage_data1, timeseries_data1)
 
 	when:
-		params.timeseries
+		!params.barcodes
+
+	script:
+		def barcode_match = "barcode01"
+    """
+	bwa mem -t $threads $reference_db $reads > ${barcode_match}_${file_id}.sam
+    """
+}
+
+
+process BwaAlignWithBarcodes {
+    tag {file_id}
+
+    input:
+        set full_name, file_id, path(reads) from fastq_barcodes
+        file(index) from asfv_reference
+		file(reference_db)
+	output:
+		file("*${file_id}.sam") into (final_data2, coverage_data2, timeseries_data2)
+
+	when:
+		params.barcodes
+
+    script:
+        def barcode_match = getBarcode(full_name).findAll().first()[1]
+    """
+	bwa mem -t $threads $reference_db $reads > ${barcode_match}_${file_id}.sam
+    """
+}
+
+
+process CoverageAnalysisIntermediate {
+	publishDir "${params.output}/CoverageAnalysis", mode: "copy"
+
+	input:
+		val(file_list) from coverage_data1.mix(coverage_data2).toList()
+	output:
+		file("coverage_results.csv")
 
 	"""
-	sam_parser.py -i '$file_list' -ot time_series_results.csv
+	sam_parser_parallel.py -i '$file_list' -oc coverage_results.csv --threads $forks
 	"""
 }
 
 
-def isFastq(def filename) {
-	def pattern = ~/(\.fastq$)|(\.fq$)/
-	return filename =~ pattern
-}
-
-
-def isFasta(def filename) {
-	def pattern = ~/(\.fa$)|(\.fasta$)/
+def getBarcode(def filename) {
+	def pattern = ~/(barcodes?[0-9]{1,2})/
 	return filename =~ pattern
 }
 
 
 def help() {
     println ""
-    println "Program: viral-direct"
+    println "Program: asffast.nf"
     println "Developer: Steven Lakin, USDA APHIS"
-    println "Description: BLAST screening pipeline for single-end, long read FASTQ files from ONT platforms."
-    println "             Files can optionally also be FASTA (automatically detected based on extension)."
+    println "Description: Alignment screening pipeline for single-end, long read FASTQ files from ONT platforms."
     println ""
-    println "Usage: viral-direct.nf [options]"
-    println "Example: nextflow viral-direct.nf --reads \"containers/data/raw*\" --db containers/databases/tempdb --output temp_out --timeseries"
+    println "Usage: asffast.nf [options]"
+    println "Example: nextflow asffast.nf "
     println ""
     println "Input/output options:"
     println ""
     println "    --reads         STR      path to single-end FASTQ input files (if using globstar, wrap in double quotes)"
     println "    --output        STR      path to output directory"
     println "    --db            STR      path to pre-made BLAST database to query against"
-    println "    --screen        STR      path to .txt file of reference headers to exclude, one per line"
+    println "    --barcodes      FLAG     input directory structure includes barcode folders"
     println ""
     println "Algorithm options:"
     println ""
     println "    --threads       INT      number of process threads, default 2 (max thread use = maxForks * threads)"
-    println "    --timeseries    FLAG     produce coverage curves over time"
     println ""
     println "Help options:"
     println ""

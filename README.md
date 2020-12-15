@@ -1,4 +1,4 @@
-# slss-viral-direct
+# slss-asffast
 ASF-FAST Nextflow pipeline for USDA APHIS SLSS
 
 ## Authors:
@@ -8,9 +8,10 @@ ASF-FAST Nextflow pipeline for USDA APHIS SLSS
  
 ## Description:
 
-Takes as input single-end FASTQ or FASTA data and performs nucleotide BLAST against a database of choice.  Options 
+Takes as input the root data directory for an ONT run and performs alignment of reads against a database of choice.  Options 
 are available for Oxford Nanopore platforms to produce time-series coverage information, regarding the rate of coverage
-gain as sequencing is performed.  Reports are generated for overall coverage data in PDF and CSV format.
+gain as sequencing is performed.  Reports are generated for overall coverage data in PDF and CSV format.  A consensus
+sequence is produced using available data when the sequencing run is terminated or when the user specifies.
 
 ## Installation and Requirements
 
@@ -37,38 +38,23 @@ curl -s https://get.nextflow.io | bash
 Clone this repository:
 
 ```shell script
-git clone https://github.com/lakinsm/slss-viral-direct
+git clone https://github.com/lakinsm/slss-asffast
 ```
 
 ## Quickstart Usage
 
-**Create a BLAST database using the option -parse_seqids:**
-
-```shell script
-makeblastdb -parse_seqids -dbtype nucl -in /path/to/reference_genomes.fasta -out /path/to/db/my_db_name
-```
-
 **Run example pipeline:**
 
 ```shell script
-cd slss-viral-direct
-nextflow viral-direct.nf --reads "containers/data/raw/*.fastq" --db containers/data/databases/tempdb --output temp_out --timeseries
+cd slss-asffast
 ```
-
-**Notes:**
-
-Input can be FASTQ or FASTA or a mixture thereof.  Use of globstar (*) must be surrounded by double quotes. 
-The database must be formatted to work with your current version of BLAST.  You can optionally provide a list of 
-sequence headers from the reference database to exclude from analysis (these must exactly match the headers in the 
-reference database), one header per line in a .txt file.
-
 
 ## Documentation
 
 **Command-line options:**
 
 ```
-Usage: viral-direct.nf [options]
+Usage: asffast.nf [options]
 
 Input/output options:
 
@@ -102,7 +88,6 @@ maximum thread usage, you must multiply the maxForks * threads, since threads de
 but multiple process instances can run simultaneously. Nextflow handles the scheduling of these tasks.
 
 Singularity options can also be configured in the nextflow.config file.  If Singularity is not desired, it can be disabled here.
-
 
 ## Description of Output
 
