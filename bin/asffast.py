@@ -13,7 +13,6 @@ from datetime import datetime
 
 
 NEXTFLOW_MAX_FORKS = 16  # Maximum file parallelism to execute (should match maxForks in nextflow.config)
-RUN_TIMEOUT_SEC = 5  # Seconds to wait for additional results to be produced before ending analysis
 BARCODE_REGEX = re.compile(r'/([Bb]arcodes?[0-9]{1,2})/')  # Regular expression to detect if barcode dirs are present
 BAR_LENGTH = 35
 TERMINAL_LENGTH = 80
@@ -193,12 +192,15 @@ parser.add_argument('-r', '--reference', type=str, default=None, required=True,
 					help='Path to multi-FASTA of reference genomes to use as the alignment database')
 parser.add_argument('-w', '--working_dir', type=str, default='/tmp',
 					help='Path to working directory for the Python watcher script')
+parser.add_argument('--wait', type=int, default=1,
+                    help='Number of seconds to watch for new data files before finalizing [1, inf)')
 
 
 if __name__ == '__main__':
 	args = parser.parse_args()
 	nextflow_work_dir = get_real_dir(args.output) + '/work'
 	nextflow_path = '/'.join(get_real_dir(sys.argv[0]).split('/')[:-1]) + '/asffast.nf'
+	nextflow_config = nextflow_path.replace('asffast.nf', 'nextflow.config')
 	globstar_input_path = None
 
 	# Calculate thread number dynamically
@@ -214,7 +216,7 @@ if __name__ == '__main__':
 
 	# Calculate input structure, find barcode ids
 	sys.stdout.write('\n')
-	while (watch_timer < RUN_TIMEOUT_SEC) and not cancel_flag:
+	while (watch_timer < args.wait) and not cancel_flag:
 		this_file_counter = 0
 		for f in glob.iglob(args.input + '/**/fastq_pass/*.fastq', recursive=True):
 			samplename = '_'.join(f.split('/')[-1].split('.')[0].split('_')[:-1])
@@ -249,6 +251,8 @@ if __name__ == '__main__':
 					'--barcodes',
 					'-w',
 					nextflow_work_dir,
+					'-config',
+					nextflow_config,
 					'-resume'
 				]
 			else:
@@ -264,6 +268,8 @@ if __name__ == '__main__':
 					os.path.realpath(args.reference),
 					'-w',
 					nextflow_work_dir,
+					'-config',
+					nextflow_config,
 					'-resume'
 				]
 			p = subprocess.Popen(nextflow_arglist)
@@ -283,3 +289,45 @@ if __name__ == '__main__':
 	sys.stdout.write('\n\n')
 
 	# Start final Nextflow run with genomic subset of reference
+	sys.stdout.write('Beginning final Nextflow run...\n\n')
+	if barcode_flag:
+		nextflow_arglist = [
+			nextflow_path,
+			'--reads',
+			globstar_input_path,
+			'--output',
+			os.path.realpath(args.output),
+			'--db',
+			os.path.realpath(args.reference),
+			'--threads',
+			threads,
+			'--barcodes',
+			'--final_flag',
+			'-w',
+			nextflow_work_dir,
+			'-config',
+			nextflow_config,
+			'-resume'
+		]
+	else:
+		nextflow_arglist = [
+			nextflow_path,
+			'--reads',
+			globstar_input_path,
+			'--output',
+			os.path.realpath(args.output),
+			'--threads',
+			threads,
+			'--db',
+			os.path.realpath(args.reference),
+			'--final_flag',
+			'-w',
+			nextflow_work_dir,
+			'-config',
+			nextflow_config,
+			'-resume'
+		]
+	p = subprocess.Popen(nextflow_arglist)
+	exit_code = p.wait()
+	sys.stdout.write('\n')
+	sys.stdout.flush()

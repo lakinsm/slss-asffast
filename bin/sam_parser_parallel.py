@@ -3,6 +3,7 @@
 
 import sys
 import argparse
+import queue
 from queue import PriorityQueue
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -18,12 +19,12 @@ class SamParser(object):
 	aligned reads if specified and only if the aligned reads do not match a provided filter file (headers of reference
 	to exclude).  Aligning reads, if output, are output as they are parsed.
 	"""
-	def __init__(self, sam_path, screen_headers=None, output_reads=False, capture_ref_len=True):
+	def __init__(self, sam_path, screen_headers=None, output_reads=None, capture_ref_len=True):
 		"""
 		Initialize object and data structures for storing coverage and coverage over time, if specified.
 		:param sam_path: STR, path to input SAM file
 		:param screen_headers: LIST, reference headers to ignore if encountered in SAM file alignments
-		:param output_reads: BOOL, output aligned reads passing filter/screen to stdout
+		:param output_reads: STR, output aligned reads passing filter/screen to this filepath in FASTA format
 		:param capture_ref_len: BOOL, store reference genome lengths from SAM headers
 		"""
 		self.sam_path = sam_path
@@ -31,6 +32,7 @@ class SamParser(object):
 		if screen_headers:
 			self.filter = set(screen_headers)
 		self.output_reads = output_reads
+		self.output_handle = None
 		if output_reads:
 			self.seen_reads = set()
 		self.handle = None
@@ -79,8 +81,8 @@ class SamParser(object):
 			reverse = False
 		if self.output_reads:
 			if query_header not in self.seen_reads:
-				self.seen_reads.add(entries[0])
-				sys.stdout.write('>{}\n{}\n'.format(
+				self.seen_reads.add(query_header)
+				self.output_handle.write('>{}\n{}\n'.format(
 					query_header,
 					query_seq
 				))
@@ -89,9 +91,13 @@ class SamParser(object):
 
 	def _open(self):
 		self.handle = open(self.sam_path, 'r')
+		if self.output_reads:
+			self.output_handle = open(self.output_reads, 'w')
 
 	def _close(self):
 		self.handle.close()
+		if self.output_reads:
+			self.output_handle.close()
 
 
 def parse_cigar(s, t_idx, rev):
@@ -145,11 +151,14 @@ def find_top_targets(cov_dict, n=5):
 	:return: tuple of genome names (target keys) in order of coverage, descending
 	"""
 	ret = ()
-	tops = PriorityQueue(maxsize=n)
+	tops = PriorityQueue()
 	for k, v in cov_dict.items():
 		tops.put((-sum(v.values()), k))
-	while not tops.empty():
-		ret += (tops.get()[1],)
+	for _ in range(n):
+		try:
+			ret += (tops.get(block=False)[1],)
+		except queue.Empty:
+			break
 	return ret
 
 
@@ -215,12 +224,15 @@ def plot_timeseries(cov_dict, output_csv_path, n=5):
 	ordered_timepoints = sorted(cov_dict.keys())
 
 	# Extract top n targets at final timepoint
-	tops = PriorityQueue(maxsize=n)
+	tops = PriorityQueue()
 	top_targets = ()
 	for target, cov in cov_dict[ordered_timepoints[-1]].items():
 		tops.put((-cov, target))
-	while not tops.empty():
-		top_targets += (tops.get()[1],)
+	for _ in range(n):
+		try:
+			top_targets += (tops.get(block=False)[1],)
+		except queue.Empty:
+			break
 
 	# Generate color palette for n colors and setup figure
 	colors = [plt.cm.Set1(i) for i in range(n)]
@@ -283,34 +295,58 @@ def write_timeseries(cov_dict, ref_len_dict, output_csv_path):
 					))
 
 
-def write_coverage(cov_dict, ref_len_dict, barcode_to_sample_dict, output_csv_path):
+def write_coverage(cov_dict, ref_len_dict, barcode_to_sample_dict, output_csv_path, final=False):
 	"""
 	Write a long-format .csv file containing genomic coverage percentages at each timepoint for all targets.
 	:param cov_dict: DICT, dictionary of coverage over indices from worker {barcode: {target: set(idxs)}
 	:param ref_len_dict: DICT, dictionary of reference genome lengths {target: length}
 	:param output_csv_path: STR, filepath of the output .csv file
+	:param final: BOOL, if this is the final run, output avg coverage in addition to genomic coverage percent
 	:return: None
 	"""
 	target_info = {}
-	for barcode, idx_dict in cov_dict.items():
-		if barcode not in target_info:
-			target_info[barcode] = ()
-		for target, idxs in idx_dict.items():
-			bases_covered = len(idxs)
-			genome_len = ref_len_dict[target]
-			target_info[barcode] += ((100 * float(bases_covered) / float(genome_len), genome_len, target),)
-	with open(output_csv_path, 'w') as out:
-		out.write('barcode,sample_id,target,genome_length,percent_bases_covered\n')
-		for barcode, data in target_info.items():
-			sorted_targets = sorted(data, key=lambda x: x[0], reverse=True)
-			for bases_covered, genome_len, target in sorted_targets:
-				out.write('{},{},{},{},{}\n'.format(
-					barcode,
-					barcode_to_sample_dict[barcode],
-					target,
-					genome_len,
-					bases_covered
-				))
+	if final:
+		for barcode, tdict in cov_dict.items():
+			if barcode not in target_info:
+				target_info[barcode] = ()
+			for target, idx_dict in tdict.items():
+				bases_aligned = sum(idx_dict.values())
+				bases_covered = len(idx_dict.keys())
+				genome_len = ref_len_dict[target]
+				target_info[barcode] += ((bases_aligned, bases_covered, genome_len, target),)
+		with open(output_csv_path, 'w') as out:
+			out.write('barcode,sample_id,target,genome_length,avg_coverage,percent_bases_covered\n')
+			for barcode, data in target_info.items():
+				sorted_targets = sorted(data, key=lambda x: x[0], reverse=True)
+				for bases_aligned, bases_covered, genome_len, target in sorted_targets:
+					out.write('{},{},{},{},{},{}\n'.format(
+						barcode,
+						barcode_to_sample_dict[barcode],
+						target,
+						genome_len,
+						float(bases_aligned) / float(genome_len),
+						100 * float(bases_covered) / float(genome_len)
+					))
+	else:
+		for barcode, idx_dict in cov_dict.items():
+			if barcode not in target_info:
+				target_info[barcode] = ()
+			for target, idxs in idx_dict.items():
+				bases_covered = len(idxs)
+				genome_len = ref_len_dict[target]
+				target_info[barcode] += ((100 * float(bases_covered) / float(genome_len), genome_len, target),)
+		with open(output_csv_path, 'w') as out:
+			out.write('barcode,sample_id,target,genome_length,percent_bases_covered\n')
+			for barcode, data in target_info.items():
+				sorted_targets = sorted(data, key=lambda x: x[0], reverse=True)
+				for bases_covered, genome_len, target in sorted_targets:
+					out.write('{},{},{},{},{}\n'.format(
+						barcode,
+						barcode_to_sample_dict[barcode],
+						target,
+						genome_len,
+						bases_covered
+					))
 
 
 def worker(infile):
@@ -322,8 +358,27 @@ def worker(infile):
 		idxs = parse_cigar(cigar, t_start - 1, q_reverse)
 		if target not in ref_cov:
 			ref_cov[target] = set()
-		ref_cov[target].add(idxs)
+		for idx in idxs:
+			ref_cov[target].add(idx)
 	return barcode_id, sample_id, ref_cov
+
+
+def final_worker(infile):
+	ref_cov = {}
+	barcode_id = infile.split('/')[-1].split('_')[0]
+	sample_id = infile.split('/')[-1].replace(barcode_id + '_', '').replace('.sam', '')
+	timepoint = infile.split('/')[-1].replace('.sam', '').split('_')[-1]
+	sam_parser = SamParser(infile, output_reads='{}_{}_aligned_reads.fasta'.format(timepoint, barcode_id))
+	for query, q_reverse, target, t_start, cigar in sam_parser:
+		idxs = parse_cigar(cigar, t_start - 1, q_reverse)
+		if target not in ref_cov:
+			ref_cov[target] = {}
+		for i in idxs:
+			if i in ref_cov[target]:
+				ref_cov[target][i] += 1
+			else:
+				ref_cov[target][i] = 1
+	return barcode_id, sample_id, int(timepoint), ref_cov
 
 
 parser = argparse.ArgumentParser('sam_parser.py')
@@ -336,7 +391,7 @@ parser.add_argument('-oc', '--output_cov', type=str, default=None, help='Filepat
 parser.add_argument('-op', '--output_pdf', type=str, default=None, help='Filepath for pdf genome coverage output file')
 parser.add_argument('-ot', '--output_time', type=str, default=None,
                     help='Filepath for time series .csv output file, overrides/exclusive with -oc and -op')
-parser.add_argument('-tmax', '--time_max', type=int, default=100, help='Maximum time point to analyze for time series')
+parser.add_argument('-tmax', '--time_max', type=int, default=200, help='Maximum time point to analyze for time series')
 parser.add_argument('--final', action='store_true', default=False,
                     help='Final run (not an intermediate): output all data as opposed to minimal')
 parser.add_argument('--threads', type=int, default=1, help='Number of threads to utilize in parallel')
@@ -346,14 +401,16 @@ if __name__ == '__main__':
 	mp.freeze_support()
 	args = parser.parse_args()
 
+	# Setup data structures
+	barcode_to_ref_cov = {}
+	barcode_to_sample_id = {}
+
+	# Format input list
+	with open(args.input, 'r') as sfile:
+		data = sfile.read().rstrip('\n')
+	sam_file_list = data.lstrip("\'").rstrip("\'").lstrip('[').rstrip(']').split(', ')
+
 	if not args.final:
-		# Setup data structures
-		barcode_to_ref_cov = {}
-		barcode_to_sample_id = {}
-
-		# Format input list
-		sam_file_list = args.input.lstrip("\'").rstrip("\'").lstrip('[').rstrip(']').split(', ')
-
 		pool = mp.Pool(processes=args.threads)
 		res = pool.map(worker, sam_file_list)
 		pool.close()
@@ -372,10 +429,92 @@ if __name__ == '__main__':
 			else:
 				for target, idxs in cov_dict.items():
 					if target in barcode_to_ref_cov[barcode]:
-						barcode_to_ref_cov[barcode][target].update(idxs)
+						for idx in idxs:
+							barcode_to_ref_cov[barcode][target].add(idx)
 					else:
 						barcode_to_ref_cov[barcode][target] = idxs
 
 		write_coverage(barcode_to_ref_cov, this_sam_parser.ref_len, barcode_to_sample_id, args.output_cov)
 	else:
-		x = True
+
+		pool = mp.Pool(processes=args.threads)
+		res = pool.map(final_worker, sam_file_list)
+		pool.close()
+		pool.join()
+		pool.terminate()
+		del pool
+
+		# Get initial reference lengths
+		this_sam_parser = SamParser(sam_file_list[0])
+
+		# Dictionaries for time series reference database coverage and for storing observed idxs cumulatively
+		timeseries_cov = {}
+		timepoint_observed_idxs = {}  # target: set(idxs)
+
+		# Combine timeseries results
+		for barcode, sample, timepoint, cov_dict in res:
+			if timepoint <= args.time_max:
+				if barcode not in timepoint_observed_idxs:
+					timepoint_observed_idxs[barcode] = {timepoint: {}}
+					timeseries_cov[barcode] = {}
+				if barcode not in barcode_to_sample_id:
+					barcode_to_sample_id[barcode] = sample.split('_')[0]
+				for target, idx_dict in cov_dict.items():
+					if timepoint not in timepoint_observed_idxs[barcode]:
+						timepoint_observed_idxs[barcode][timepoint] = {}
+					timepoint_observed_idxs[barcode][timepoint][target] = set(idx_dict.keys())
+
+		# Finalize timeseries data
+		for barcode, tsdict in timepoint_observed_idxs.items():
+			cumulative = {}
+			ordered_timepoints = sorted([int(x) for x in tsdict.keys()])
+			for timepoint in ordered_timepoints:
+				tsdict2 = tsdict[timepoint]
+				timeseries_cov.setdefault(barcode, {timepoint: {}})
+				for target, idx_set in tsdict2.items():
+					if target not in cumulative:
+						cumulative[target] = idx_set
+					else:
+						for idx in idx_set:
+							cumulative[target].add(idx)
+					if timepoint not in timeseries_cov[barcode]:
+						timeseries_cov[barcode][timepoint] = {}
+					timeseries_cov[barcode][timepoint][target] = 100 * float(len(cumulative[target])) / \
+					                                             float(this_sam_parser.ref_len[target])
+
+		for barcode, tsdict in timeseries_cov.items():
+			csv_path = '{}_{}_timeseries_results.csv'.format(barcode, barcode_to_sample_id[barcode])
+			plot_timeseries(tsdict, csv_path)
+			write_timeseries(tsdict, this_sam_parser.ref_len, csv_path)
+
+		# Combine coverage results
+		for barcode, sample, timepoint, cov_dict in res:
+			if barcode not in barcode_to_ref_cov:
+				barcode_to_ref_cov[barcode] = cov_dict
+			if barcode not in barcode_to_sample_id:
+				barcode_to_sample_id[barcode] = sample.split('_')[0]
+			else:
+				for target, idx_dict in cov_dict.items():
+					if target not in barcode_to_ref_cov[barcode]:
+						barcode_to_ref_cov[barcode][target] = idx_dict
+					else:
+						for idx, count in idx_dict.items():
+							if idx in barcode_to_ref_cov[barcode][target]:
+								barcode_to_ref_cov[barcode][target][idx] += count
+							else:
+								barcode_to_ref_cov[barcode][target][idx] = count
+
+		# Finalize coverage data
+		write_coverage(barcode_to_ref_cov, this_sam_parser.ref_len, barcode_to_sample_id, args.output_cov, final=True)
+
+		for barcode, cov_dict in barcode_to_ref_cov.items():
+			top_targets = find_top_targets(cov_dict)
+			n_windows = 500  # Number of points to graph rolling avg for coverage plots
+			sample_id = barcode_to_sample_id[barcode]
+			pdf_path = '{}_{}_coverage_results.pdf'.format(barcode, sample_id)
+			with PdfPages(pdf_path) as pdf:
+				for t in top_targets:
+					# k = 2n / (m + 1)
+					window_size = np.ceil(float(2 * this_sam_parser.ref_len[t]) / float(n_windows + 1))
+					window_size = np.max((window_size, 1))
+					plot_cov(cov_dict, t, this_sam_parser.ref_len[t], window_size, pdf)
