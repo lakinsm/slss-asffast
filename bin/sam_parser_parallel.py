@@ -19,6 +19,7 @@ class SamParser(object):
 	aligned reads if specified and only if the aligned reads do not match a provided filter file (headers of reference
 	to exclude).  Aligning reads, if output, are output as they are parsed.
 	"""
+
 	def __init__(self, sam_path, screen_headers=None, output_reads=None, capture_ref_len=True):
 		"""
 		Initialize object and data structures for storing coverage and coverage over time, if specified.
@@ -180,7 +181,7 @@ def rolling_average(data, window_size, interval, max_len):
 	window_start = 0
 	window_end = window_size
 	while window_end <= max_len:
-		idxs = np.where((local_data[:, 0] < window_end) * (local_data[:, 0] > window_start))
+		idxs = np.where((local_data[:, 0] < window_end) * (local_data[:, 0] >= window_start))
 		ret += (np.sum(local_data[idxs, 1]) / float(window_size),)
 		window_start += interval
 		window_end += interval
@@ -197,7 +198,8 @@ def plot_cov(cov_dict, target, target_len, window_size, pdf_handle):
 	:param pdf_handle: FILE HANDLE, pdf file handle object for saving figures
 	:return: None
 	"""
-	y = rolling_average([(k, v) for k, v in cov_dict[target].items()], window_size, np.ceil(window_size / 2), target_len)
+	y = rolling_average([(k, v) for k, v in cov_dict[target].items()], window_size, np.ceil(window_size / 2),
+	                    target_len)
 	x = window_size * np.array(range(len(y)))
 	plt.figure(figsize=(15, 10))
 	plt.fill_between(x, y, 0,
@@ -325,7 +327,7 @@ def write_coverage(cov_dict, ref_len_dict, barcode_to_sample_dict, output_csv_pa
 						target,
 						genome_len,
 						float(bases_aligned) / float(genome_len),
-						100 * float(bases_covered) / float(genome_len)
+						np.min((100., 100 * float(bases_covered) / float(genome_len)))
 					))
 	else:
 		for barcode, idx_dict in cov_dict.items():
@@ -345,7 +347,7 @@ def write_coverage(cov_dict, ref_len_dict, barcode_to_sample_dict, output_csv_pa
 						barcode_to_sample_dict[barcode],
 						target,
 						genome_len,
-						bases_covered
+						np.min((100., bases_covered))
 					))
 
 
@@ -391,11 +393,10 @@ parser.add_argument('-oc', '--output_cov', type=str, default=None, help='Filepat
 parser.add_argument('-op', '--output_pdf', type=str, default=None, help='Filepath for pdf genome coverage output file')
 parser.add_argument('-ot', '--output_time', type=str, default=None,
                     help='Filepath for time series .csv output file, overrides/exclusive with -oc and -op')
-parser.add_argument('-tmax', '--time_max', type=int, default=200, help='Maximum time point to analyze for time series')
+parser.add_argument('-tmax', '--time_max', type=int, default=400, help='Maximum time point to analyze for time series')
 parser.add_argument('--final', action='store_true', default=False,
                     help='Final run (not an intermediate): output all data as opposed to minimal')
 parser.add_argument('--threads', type=int, default=1, help='Number of threads to utilize in parallel')
-
 
 if __name__ == '__main__':
 	mp.freeze_support()
@@ -466,21 +467,18 @@ if __name__ == '__main__':
 
 		# Finalize timeseries data
 		for barcode, tsdict in timepoint_observed_idxs.items():
-			cumulative = {}
-			ordered_timepoints = sorted([int(x) for x in tsdict.keys()])
-			for timepoint in ordered_timepoints:
-				tsdict2 = tsdict[timepoint]
+			cumulative = {k: set() for k in this_sam_parser.ref_len.keys()}
+			for timepoint in range(args.time_max):
 				timeseries_cov.setdefault(barcode, {timepoint: {}})
-				for target, idx_set in tsdict2.items():
-					if target not in cumulative:
-						cumulative[target] = idx_set
-					else:
-						for idx in idx_set:
-							cumulative[target].add(idx)
-					if timepoint not in timeseries_cov[barcode]:
-						timeseries_cov[barcode][timepoint] = {}
-					timeseries_cov[barcode][timepoint][target] = 100 * float(len(cumulative[target])) / \
-					                                             float(this_sam_parser.ref_len[target])
+				if timepoint not in timeseries_cov[barcode]:
+					timeseries_cov[barcode][timepoint] = {}
+				for target in cumulative.keys():
+					if timepoint in tsdict:
+						if target in tsdict[timepoint]:
+							for idx in tsdict[timepoint][target]:
+								cumulative[target].add(idx)
+					timeseries_cov[barcode][timepoint][target] = np.min((100., 100 * float(len(cumulative[target])) / \
+					                                                     float(this_sam_parser.ref_len[target])))
 
 		for barcode, tsdict in timeseries_cov.items():
 			csv_path = '{}_{}_timeseries_results.csv'.format(barcode, barcode_to_sample_id[barcode])
