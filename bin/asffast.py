@@ -159,8 +159,11 @@ def report_intermediate_coverage(infile, n=3):
 			barcode,
 			data_dict[barcode][0]
 		))
-		for i in range(n):
-			percent_cov, target = data_dict[barcode][1].get()
+		n_refs = n
+		if data_dict[barcode][1].qsize() < n:
+			n_refs = data_dict[barcode][1].qsize()
+		for i in range(n_refs):
+			percent_cov, target = data_dict[barcode][1].get(block=False)
 			percent_cov = -percent_cov
 			if 0. <= percent_cov < 20.:
 				bar_col = '\u001b[41m'  # 41 = bg red
