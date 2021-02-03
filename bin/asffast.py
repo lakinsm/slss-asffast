@@ -195,6 +195,8 @@ parser.add_argument('-r', '--reference', type=str, default=None, required=True,
 					help='Path to multi-FASTA of reference genomes to use as the alignment database')
 parser.add_argument('-w', '--working_dir', type=str, default='/tmp',
 					help='Path to working directory for the Python watcher script')
+parser.add_argument('-s', '--singularity', type=str, default=None,
+                    help='Path to Singularity container image')
 parser.add_argument('--wait', type=int, default=1,
                     help='Number of seconds to watch for new data files before finalizing [1, inf)')
 
@@ -275,6 +277,8 @@ if __name__ == '__main__':
 					nextflow_config,
 					'-resume'
 				]
+			if args.singularity:
+				nextflow_arglist += ['-with-singularity', args.singularity]
 			p = subprocess.Popen(nextflow_arglist)
 			exit_code = p.wait()
 			sys.stdout.write('\n')
@@ -330,6 +334,8 @@ if __name__ == '__main__':
 			nextflow_config,
 			'-resume'
 		]
+	if args.singularity:
+		nextflow_arglist += ['-with-singularity', args.singularity]
 	p = subprocess.Popen(nextflow_arglist)
 	exit_code = p.wait()
 	sys.stdout.write('\n')

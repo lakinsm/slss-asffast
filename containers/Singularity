@@ -1,31 +1,39 @@
 Bootstrap: docker
-From: ubuntu:16.04
+From: ubuntu:bionic
 
-##############################################################
-# Singularity File Version: 0.1
-# Software: trimmomatic
-# Software Version: 0.36
-# Software Website: http://www.usadellab.org
-# Description: A flexible read trimming tool for Illumina NGS data 
-# Build command: sudo singularity build trimmomatic.simg containers/Singularity
-##############################################################
+
+%environment
+    CONDA_INSTALL_PATH="/usr/local/miniconda3"
+    CONDA_BIN_PATH="/usr/local/miniconda3/bin"
+    export PATH="$CONDA_BIN_PATH:$PATH"
+    . /usr/local/miniconda3/etc/profile.d/conda.sh
+    conda activate ASFFAST
+
+
+%files
+    scripts/1_samtools_install.sh /opt
+    scripts/2_miniconda_install.sh /opt
+    scripts/3_asffast_activate.sh /opt
+
+
 %post
-    # Define variables
-    APP_NAME="Trimmomatic"
-    VERSION="0.39"
-    DEST="/opt/${APP_NAME}-${VERSION}"
-    PATH="${PATH}:${DEST}"
-    
-    # Install base packages
+    cd $HOME
+    export DEBIAN_FRONTEND=noninteractive
     apt-get update && apt-get install -y --no-install-recommends \
-    wget \
+    ca-certificates \
     unzip \
-    openjdk-8-jre
-    
-    # Install Trimmomatic
-    cd /opt
-    wget -O ${APP_NAME}-${VERSION}.zip \
-        http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-$VERSION.zip
-    unzip ${APP_NAME}-${VERSION}.zip
-    rm -f ${APP_NAME}-${VERSION}.zip
-
+    gcc \
+    python-dev \
+    python-pip \
+    python3-dev \
+    python3-pip \
+    python-numpy \
+    python-matplotlib \
+    python-setuptools \
+    pkg-config \
+    apt-transport-https \
+    && apt-get update
+    bash /opt/1_samtools_install.sh
+    bash /opt/2_miniconda_install.sh
+    export PATH="/usr/local/miniconda3/bin:$PATH"
+    bash /opt/3_asffast_activate.sh
