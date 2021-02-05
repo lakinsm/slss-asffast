@@ -288,9 +288,7 @@ if __name__ == '__main__':
 			else:
 				nextflow_arglist += ['-with-singularity', SINGULARITY_LIB_PATH]
 			if args.slurm:
-				nextflow_arglist[12] = SLURM_CONFIG
-			print(nextflow_arglist)
-			sys.exit()
+				nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 			p = subprocess.Popen(nextflow_arglist)
 			exit_code = p.wait()
 			sys.stdout.write('\n')
@@ -351,7 +349,7 @@ if __name__ == '__main__':
 	else:
 		nextflow_arglist += ['-with-singularity', SINGULARITY_LIB_PATH]
 	if args.slurm:
-		nextflow_arglist[12] = SLURM_CONFIG
+		nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 	p = subprocess.Popen(nextflow_arglist)
 	exit_code = p.wait()
 	sys.stdout.write('\n')
