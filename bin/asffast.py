@@ -4,7 +4,7 @@ import sys
 import os
 import re
 import subprocess
-import numpy as np
+import math
 import argparse
 import glob
 import time
@@ -173,7 +173,7 @@ def report_intermediate_coverage(infile, n=3):
 				bar_col = '\u001b[43m'  # 43 = bg yellow
 			else:
 				bar_col = '\u001b[42m'  # 42 = bg green
-			count = int(np.floor(BAR_LENGTH * percent_cov / 100))
+			count = int(math.floor(BAR_LENGTH * percent_cov / 100))
 			short_target = target.split('|')[-1].rstrip('_')
 			second_gap = int(max(1, (TERMINAL_LENGTH - len(short_target) - BAR_LENGTH)))
 			sys.stdout.write('\t{}:{}|{}{}{}{}| {:.2f}%\n'.format(
@@ -216,7 +216,7 @@ if __name__ == '__main__':
 
 	# Calculate thread number dynamically
 	avail_threads = available_cpu_count()
-	threads = str(int(np.max((1, np.ceil(float(avail_threads) / float(NEXTFLOW_MAX_FORKS))))))
+	threads = str(int(max((1, math.ceil(float(avail_threads) / float(NEXTFLOW_MAX_FORKS))))))
 
 	# Setup data structures
 	samples = set()  # Either tuples of samplenames (no barcodes) or tuples of (samplename, barcode)
