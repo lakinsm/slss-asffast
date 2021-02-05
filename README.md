@@ -4,7 +4,7 @@ ASF-FAST Nextflow pipeline for USDA APHIS SLSS
 ## Authors:
  - Roger Barrette (original methods)
  - Oleg Osipenko (Python development)
- - Steven Lakin (optimization)
+ - Steven Lakin (optimization, containerization)
  
 ## Description:
 
@@ -17,17 +17,13 @@ sequence is produced using available data when the sequencing run is terminated 
 
 **Runs on:**
 - Debian or CentOS Linux
-- MacOS
 
 **Depends on:**
- - Python3
- - Python matplotlib
- - Python numpy
+
+All of the following *must* be in the user's $PATH:
+ - Python3.5+ with the numpy package
  - Nextflow v20+ (Java 8+)
- - BWA v0.7.17
- - Samtools 1.10
- - Bcftools 1.10.2
- - (Optional) Singularity v3+
+ - Singularity v3+
  
 **Installation:**
 
@@ -35,6 +31,30 @@ Install nextflow:
 
 ```shell script
 curl -s https://get.nextflow.io | bash
+```
+
+[Install Singularity](https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps) and make the 
+following changes to the file singularity.conf (usually /usr/local/etc/singularity/singularity.conf):
+ 
+ - [enable overlay](https://singularity-admindoc.readthedocs.io/en/latest/the_singularity_config_file.html#user-bind-control-boolean-default-yes)
+ - add /run (and /scratch if on a distributed cluster) as a default bind path in singularity.conf, for example as below: 
+ 
+```
+# BIND PATH: [STRING]
+# DEFAULT: Undefined
+# Define a list of files/directories that should be made available from within
+# the container. The file or directory must exist within the container on
+# which to attach to. you can specify a different source and destination
+# path (respectively) with a colon; otherwise source and dest are the same.
+# NOTE: these are ignored if singularity is invoked with --contain except
+# for /etc/hosts and /etc/localtime. When invoked with --contain and --net,
+# /etc/hosts would contain a default generated content for localhost resolution.
+#bind path = /etc/singularity/default-nsswitch.conf:/etc/nsswitch.conf
+#bind path = /opt
+#bind path = /scratch
+bind path = /etc/localtime
+bind path = /etc/hosts
+bind path = /run
 ```
 
 Clone this repository:
@@ -45,10 +65,16 @@ git clone https://github.com/lakinsm/slss-asffast
 
 ## Quickstart Usage
 
-**Example usage:**
+**Standard (local executor) usage:**
 
 ```shell script
 slss-asffast/bin/asffast.py -i data/ -o desired_output_dir -r slss-asffast/containers/data/databases/asfv_refseq_db.fasta
+```
+
+**SLURM (MPI executor) usage:**
+
+```shell script
+slss-asffast/bin/asffast.py -i data/ -o desired_output_dir -r slss-asffast/containers/data/databases/asfv_refseq_db.fasta --slurm
 ```
 
 ## Documentation
@@ -60,13 +86,15 @@ Usage: bin/asffast.py [-h] -i INPUT -o OUTPUT -r REFERENCE
 
 Input/output options:
 
-    -i --input      STR      path to ONT data run directory
-    -o --output     STR      path to output directory
-    -r --reference  STR      path to multi-FASTA file of reference genomes
+    -i --input          STR      path to ONT data run directory
+    -o --output         STR      path to output directory
+    -r --reference      STR      path to multi-FASTA file of reference genomes
 
-Algorithm options:
+Algorithm and execution options:
 
-    --wait          INT      number of seconds to watch for new data files before finalizing [1, inf)
+    -s --singularity    STR      path to Singularity image (uses cloud by default if this isn't passed)
+    --slurm             FLAG     Flag to execute pipeline using the SLURM executor for HPC clusters
+    --wait              INT      number of seconds to watch for new data files before finalizing [1, inf)
 
 Help options:
 
@@ -81,6 +109,8 @@ in the process section in that file.  MaxForks determines how many *processes* c
 maximum thread usage, you must multiply the maxForks * threads, since threads determine per-process thread utilization, 
 but multiple process instances can run simultaneously. Nextflow handles the scheduling of these tasks.
 
-Singularity options can also be configured in the nextflow.config file.  If Singularity is not desired, it can be disabled here.
+**slss_hpc_slurm.conf file:**
 
-## Description of Output
+This is the config file for SLURM execution across MPI-based distributed clusters.  You can modify SLURM options and 
+change how Nextflow interfaces with SLURM in this file.  This file is independent of nextflow.config, so any changes 
+made to nextflow.config must also be made to this file for equivalent effect.

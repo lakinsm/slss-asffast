@@ -12,6 +12,8 @@ from queue import PriorityQueue
 from datetime import datetime
 
 
+SINGULARITY_LIB_PATH = 'library://lakinsm/default/slss-asffast:alpha1'
+SLURM_CONFIG = 'slss_hpc_slurm.config'
 NEXTFLOW_MAX_FORKS = 16  # Maximum file parallelism to execute (should match maxForks in nextflow.config)
 BARCODE_REGEX = re.compile(r'/([Bb]arcodes?[0-9]{1,2})/')  # Regular expression to detect if barcode dirs are present
 BAR_LENGTH = 35
@@ -196,7 +198,11 @@ parser.add_argument('-r', '--reference', type=str, default=None, required=True,
 parser.add_argument('-w', '--working_dir', type=str, default='/tmp',
 					help='Path to working directory for the Python watcher script')
 parser.add_argument('-s', '--singularity', type=str, default=None,
-                    help='Path to Singularity container image')
+                    help='Path to Singularity container if other than default (pulls from cloud if this argument isn\'t used)')
+parser.add_argument('--slurm', action='store_true', default=False,
+                    help='Flag for use of SLURM for HPC clusters.  Modify {} to change cluster options.'.format(
+						SLURM_CONFIG
+                    ))
 parser.add_argument('--wait', type=int, default=1,
                     help='Number of seconds to watch for new data files before finalizing [1, inf)')
 
@@ -279,6 +285,10 @@ if __name__ == '__main__':
 				]
 			if args.singularity:
 				nextflow_arglist += ['-with-singularity', args.singularity]
+			else:
+				nextflow_arglist += ['-with-singularity', SINGULARITY_LIB_PATH]
+			if args.slurm:
+				nextflow_arglist[13] = SLURM_CONFIG
 			p = subprocess.Popen(nextflow_arglist)
 			exit_code = p.wait()
 			sys.stdout.write('\n')
@@ -336,6 +346,10 @@ if __name__ == '__main__':
 		]
 	if args.singularity:
 		nextflow_arglist += ['-with-singularity', args.singularity]
+	else:
+		nextflow_arglist += ['-with-singularity', SINGULARITY_LIB_PATH]
+	if args.slurm:
+		nextflow_arglist[13] = SLURM_CONFIG
 	p = subprocess.Popen(nextflow_arglist)
 	exit_code = p.wait()
 	sys.stdout.write('\n')
