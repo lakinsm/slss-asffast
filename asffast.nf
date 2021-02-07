@@ -180,7 +180,7 @@ def help() {
     println ""
     println "Algorithm options:"
     println ""
-    println "    --threads       INT      number of process threads, default 2 (max thread use = maxForks * threads)"
+    println "    --threads       INT      number of process threads, default 1 (max thread use = maxForks * threads)"
     println "    --final_flag    FLAG     indicate that this is the final run"
     println ""
     println "Help options:"

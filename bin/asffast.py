@@ -190,7 +190,7 @@ def report_intermediate_coverage(infile, n=3):
 
 parser = argparse.ArgumentParser('asffast.py')
 parser.add_argument('-i', '--input', type=str, default=None, required=True,
-					help='Existing input root data directory for ONT sequencing run')
+					help='Existing input root data directory for ONT sequencing run (must contain the desired sample name)')
 parser.add_argument('-o', '--output', type=str, default=None, required=True,
 					help='Path to desired result output directory')
 parser.add_argument('-r', '--reference', type=str, default=None, required=True,
@@ -216,7 +216,10 @@ if __name__ == '__main__':
 
 	# Calculate thread number dynamically
 	avail_threads = available_cpu_count()
-	threads = str(int(max((1, math.ceil(float(avail_threads) / float(NEXTFLOW_MAX_FORKS))))))
+	if args.slurm:  # BWA will be run with 1 thread but forked into max available CPUs here for efficiency on cluster
+		threads = 1
+	else:
+		threads = str(int(max((1, math.ceil(float(avail_threads) / float(NEXTFLOW_MAX_FORKS))))))
 
 	# Setup data structures
 	samples = set()  # Either tuples of samplenames (no barcodes) or tuples of (samplename, barcode)
@@ -229,7 +232,13 @@ if __name__ == '__main__':
 	sys.stdout.write('\n')
 	while (watch_timer < args.wait) and not cancel_flag:
 		this_file_counter = 0
-		for f in glob.iglob(args.input + '/**/fastq_pass/*.fastq', recursive=True):
+		fastqs = glob.iglob(args.input + '/**/fastq_pass/*.fastq', recursive=True)
+		if not fastqs:
+			sys.stderr.write('\nNo folder \"fastq_pass\" or .fastq files detected in subdirectories of {}\n'.format(
+				args.input
+			))
+			raise ValueError
+		for f in fastqs:
 			samplename = '_'.join(f.split('/')[-1].split('.')[0].split('_')[:-1])
 			barcode = BARCODE_REGEX.search(f)
 			if barcode:
