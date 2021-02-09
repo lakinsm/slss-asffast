@@ -219,7 +219,7 @@ if __name__ == '__main__':
 	# Calculate thread number dynamically
 	avail_threads = available_cpu_count()
 	if args.slurm:  # BWA will be run with 1 thread but forked into max available CPUs here for efficiency on cluster
-		threads = 1
+		threads = 2
 	else:
 		threads = str(int(max((1, math.ceil(float(avail_threads) / float(NEXTFLOW_MAX_FORKS))))))
 
