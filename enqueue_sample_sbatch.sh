@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=40
 #SBATCH --job-name=asffast_nextflow_sbatch
 #SBATCH --mem=90gb
-#SBATCH --time=02:00:00
+#SBATCH --time=04:00:00
 #SBATCH --output=asffast_nextflow_sbatch_%j.log
 
 module load python37
@@ -15,6 +15,6 @@ samplename=$( basename $1 )
 
 echo -e "Enqueuing job for data directory: ${samplename}, output directory: ${2}, reference: ${3}"
 # Remember to add in singularity container path as -s argument once we get cachedir setup
-srun slss-asffast/bin/asffast.py -i "$1" -o "$2" -r "$3" --slurm
+# srun slss-asffast/bin/asffast.py -i "$1" -o "$2" -r "$3" -s singularity_containers/slss-asffast_alpha1.sif -w /lustrefs/scratch_dir/work --slurm
 
 echo -e "Job finished for data directory ${samplename}"
