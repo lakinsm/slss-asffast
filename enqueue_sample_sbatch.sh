@@ -11,13 +11,12 @@
 module load python37
 export NXF_CLUSTER_SEED=$( shuf -i 0-16777216 -n 1 )
 
-samplename=$( basename $1 )
-
 echo -e "\n$(date): Enqueuing job"
 echo -e "Executable: ${1}"
-echo -e "Data directory: ${samplename}"
-echo -e "Output directory: ${2}"
-echo -e "Reference: ${3}"
-echo -e "Container: ${4}\n"
+echo -e "Data directory: ${2}"
+echo -e "Output directory: ${3}"
+echo -e "Reference: ${4}"
+echo -e "Container: ${5}"
+echo -e "Working directory: ${6}"
 srun "$1" -i "$2" -o "$3" -r "$4" -s "$5" -w "$6" --slurm
-echo -e "\n$(date): Job finished for data directory ${samplename}\n"
+echo -e "\n$(date): Job finished for data directory ${2}\n"
