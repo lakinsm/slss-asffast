@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
+#SBATCH --exclusive
 #SBATCH --cpus-per-task=40
 #SBATCH --job-name=asffast_nextflow_sbatch
-#SBATCH --mem=20gb
+#SBATCH --mem=90gb
 #SBATCH --time=02:00:00
 #SBATCH --output=asffast_nextflow_sbatch_%j.log
 
