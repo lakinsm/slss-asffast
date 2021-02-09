@@ -9,7 +9,6 @@
 #SBATCH --output=asffast_nextflow_sbatch_%j.log
 
 module load python37
-module load singularity
 export NXF_CLUSTER_SEED=$( shuf -i 0-16777216 -n 1 )
 
 samplename=$( basename $1 )
