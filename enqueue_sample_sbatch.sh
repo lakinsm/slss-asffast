@@ -4,7 +4,7 @@
 #SBATCH --exclusive
 #SBATCH --cpus-per-task=40
 #SBATCH --job-name=asffast_nextflow_sbatch
-#SBATCH --mem=90gb
+#SBATCH --mem=120gb
 #SBATCH --time=04:00:00
 #SBATCH --output=asffast_nextflow_sbatch_%j.log
 
