@@ -150,7 +150,7 @@ process ProduceConsensus {
 	"""
 	samtools view -bS $sam | samtools sort - -o ${sam}_sorted.bam
 
-	bcftools mpileup -d 400 -f $ref ${sam}_sorted.bam | bcftools call -c | vcfutils.pl vcf2fq > ${sam}.fastq
+	bcftools mpileup -d 500 -f $ref ${sam}_sorted.bam | bcftools call -c | vcfutils.pl vcf2fq > ${sam}.fastq
 	fastq_to_fasta.py ${sam}.fastq > ${sam}_consensus.fasta
 	"""
 }
