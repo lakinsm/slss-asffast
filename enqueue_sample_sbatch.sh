@@ -13,6 +13,11 @@ export NXF_CLUSTER_SEED=$( shuf -i 0-16777216 -n 1 )
 
 samplename=$( basename $1 )
 
-echo -e "\n$(date): Enqueuing job for data directory: ${samplename}, output directory: ${2}, reference: ${3}, container: ${4}\n"
-srun slss-asffast/bin/asffast.py -i "$1" -o "$2" -r "$3" -s "$4" -w /lustrefs/scratch_dir/work --slurm
+echo -e "\n$(date): Enqueuing job"
+echo -e "Executable: ${1}"
+echo -e "Data directory: ${samplename}"
+echo -e "Output directory: ${2}"
+echo -e "Reference: ${3}"
+echo -e "Container: ${4}\n"
+srun "$1" -i "$2" -o "$3" -r "$4" -s "$5" -w "$6" --slurm
 echo -e "\n$(date): Job finished for data directory ${samplename}\n"
