@@ -299,7 +299,10 @@ if __name__ == '__main__':
 			else:
 				nextflow_arglist += ['-with-singularity', SINGULARITY_LIB_PATH]
 			if args.slurm:
-				nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
+				if barcode_flag:
+					nextflow_arglist[13] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
+				else:
+					nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 			p = subprocess.Popen([str(x) for x in nextflow_arglist])
 			exit_code = p.wait()
 			sys.stdout.write('\n')
@@ -360,7 +363,10 @@ if __name__ == '__main__':
 	else:
 		nextflow_arglist += ['-with-singularity', SINGULARITY_LIB_PATH]
 	if args.slurm:
-		nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
+		if barcode_flag:
+			nextflow_arglist[13] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
+		else:
+			nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 	p = subprocess.Popen([str(x) for x in nextflow_arglist])
 	exit_code = p.wait()
 	sys.stdout.write('\n')
