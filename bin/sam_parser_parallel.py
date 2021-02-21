@@ -312,9 +312,9 @@ def write_coverage(cov_dict, ref_len_dict, barcode_to_sample_dict, output_csv_pa
 			if barcode not in target_info:
 				target_info[barcode] = ()
 			for target, idx_dict in tdict.items():
-				bases_aligned = sum(idx_dict.values())
-				bases_covered = len(idx_dict.keys())
 				genome_len = ref_len_dict[target]
+				bases_aligned = sum(idx_dict.values())
+				bases_covered = len(set(range(genome_len)).intersection(idx_dict.keys()))
 				target_info[barcode] += ((bases_aligned, bases_covered, genome_len, target),)
 		with open(output_csv_path, 'w') as out:
 			out.write('barcode,sample_id,target,genome_length,avg_coverage,percent_bases_covered\n')
@@ -327,15 +327,15 @@ def write_coverage(cov_dict, ref_len_dict, barcode_to_sample_dict, output_csv_pa
 						target,
 						genome_len,
 						float(bases_aligned) / float(genome_len),
-						np.min((100., 100 * float(bases_covered) / float(genome_len)))
+						100 * float(bases_covered) / float(genome_len)
 					))
 	else:
 		for barcode, idx_dict in cov_dict.items():
 			if barcode not in target_info:
 				target_info[barcode] = ()
 			for target, idxs in idx_dict.items():
-				bases_covered = len(idxs)
 				genome_len = ref_len_dict[target]
+				bases_covered = len(set(range(genome_len)).intersection(idxs))
 				target_info[barcode] += ((100 * float(bases_covered) / float(genome_len), genome_len, target),)
 		with open(output_csv_path, 'w') as out:
 			out.write('barcode,sample_id,target,genome_length,percent_bases_covered\n')
@@ -347,7 +347,7 @@ def write_coverage(cov_dict, ref_len_dict, barcode_to_sample_dict, output_csv_pa
 						barcode_to_sample_dict[barcode],
 						target,
 						genome_len,
-						np.min((100., bases_covered))
+						bases_covered
 					))
 
 
