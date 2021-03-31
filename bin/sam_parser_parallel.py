@@ -200,7 +200,7 @@ def plot_cov(cov_dict, target, target_len, window_size, pdf_handle):
 	"""
 	y = rolling_average([(k, v) for k, v in cov_dict[target].items()], window_size, np.ceil(window_size / 2),
 	                    target_len)
-	x = window_size * np.array(range(len(y)))
+	x = np.ceil(window_size / 2) * np.array(range(len(y)))
 	plt.figure(figsize=(15, 10))
 	plt.fill_between(x, y, 0,
 	                 facecolor='blue',

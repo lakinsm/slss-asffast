@@ -210,8 +210,8 @@ parser.add_argument('--wait', type=int, default=1,
 if __name__ == '__main__':
 	args = parser.parse_args()
 	nextflow_work_dir = get_real_dir(args.working_dir)
-	if nextflow_work_dir.rstrip('/').split('/')[-1] != 'work':
-		nextflow_work_dir += '/work'
+	# if nextflow_work_dir.rstrip('/').split('/')[-1] != 'work':
+	# 	nextflow_work_dir += '/work'
 	nextflow_path = '/'.join(get_real_dir(sys.argv[0]).split('/')[:-1]) + '/asffast.nf'
 	nextflow_config = nextflow_path.replace('asffast.nf', 'nextflow.config')
 	globstar_input_path = None
