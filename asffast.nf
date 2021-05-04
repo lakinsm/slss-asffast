@@ -42,19 +42,20 @@ process PlotMinknowMetadata {
 	when:
 		final_flag
 
-	if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
-		"""
-		plot_nanopore_metadata.py $seqfile $thrfile outdir
-		"""
-	else
-		"""
-		mkdir outdir
-		touch outdir/nanopore_filecounts.csv
-		touch outdir/nanopore_throughput.csv
-		touch outdir/nanopore_stats_overall.txt
-		touch outdir/filecount_timeseries_graph.pdf
-		touch outdir/throughput_timeseries_graph.pdf
-		"""
+	script:
+		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
+			"""
+			plot_nanopore_metadata.py $seqfile $thrfile outdir
+			"""
+		else
+			"""
+			mkdir outdir
+			touch outdir/nanopore_filecounts.csv
+			touch outdir/nanopore_throughput.csv
+			touch outdir/nanopore_stats_overall.txt
+			touch outdir/filecount_timeseries_graph.pdf
+			touch outdir/throughput_timeseries_graph.pdf
+			"""
 }
 
 
