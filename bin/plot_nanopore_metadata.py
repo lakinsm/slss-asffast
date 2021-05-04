@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import numpy as np
 from queue import PriorityQueue
@@ -57,6 +58,8 @@ def plot_data(fcount_data, thr_data, output_pdf_dir):
 
 
 def write_timeseries(seq_dict, through_data, output_csv_dir):
+	if not os.path.isdir(output_csv_dir):
+		os.mkdir(output_csv_dir)
 	q = PriorityQueue(maxsize=-1)
 	for v in seq_dict.values():
 		q.put(v, block=False)
