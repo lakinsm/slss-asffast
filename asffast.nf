@@ -13,12 +13,17 @@ final_flag = params.final_flag
 if( params.throughput != 'NONE_T' ) {
 	throughput = Channel.fromPath("$params.throughput")
 }
+else {
+	throughput = params.throughput
+}
 
 
 if( params.sequencing != 'NONE_S' ) {
 	sequencing = Channel.fromPath("$params.sequencing")
 }
-
+else {
+	sequencing = params.sequencing
+}
 
 Channel
     .fromPath( params.reads )
