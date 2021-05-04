@@ -38,11 +38,11 @@ process PlotMinknowMetadata {
 		file thrfile from throughput.collect()
 		file seqfile from sequencing.collect()
 	output:
-		file("outdir/nanopore_filecounts.csv")
-		file("outdir/nanopore_throughput.csv")
-		file("outdir/nanopore_stats_overall.txt")
-		file("outdir/filecount_timeseries_graph.pdf")
-		file("outdir/throughput_timeseries_graph.pdf")
+		file("nanopore_filecounts.csv")
+		file("nanopore_throughput.csv")
+		file("nanopore_stats_overall.txt")
+		file("filecount_timeseries_graph.pdf")
+		file("throughput_timeseries_graph.pdf")
 
 	when:
 		final_flag
@@ -50,16 +50,15 @@ process PlotMinknowMetadata {
 	script:
 		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
 			"""
-			plot_nanopore_metadata.py $seqfile $thrfile outdir
+			plot_nanopore_metadata.py $seqfile $thrfile .
 			"""
 		else
 			"""
-			mkdir outdir
-			touch outdir/nanopore_filecounts.csv
-			touch outdir/nanopore_throughput.csv
-			touch outdir/nanopore_stats_overall.txt
-			touch outdir/filecount_timeseries_graph.pdf
-			touch outdir/throughput_timeseries_graph.pdf
+			touch nanopore_filecounts.csv
+			touch nanopore_throughput.csv
+			touch nanopore_stats_overall.txt
+			touch filecount_timeseries_graph.pdf
+			touch throughput_timeseries_graph.pdf
 			"""
 }
 
