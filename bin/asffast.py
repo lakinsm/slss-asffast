@@ -324,7 +324,13 @@ if __name__ == '__main__':
 
 	# Find metadata files if they exist and optionally include in the final run
 	fq_pass = glob.iglob(args.input + '/**/fastq_pass', recursive=True)
-	metadata_dir = os.path.realpath(fq_pass.split('fastq_pass')[0])
+	if len(fq_pass) > 1:
+		sys.stderr.write('Error: Multiple fastq_pass folders were found in data directory when only one'
+		                 ' should be present.  Please re-run the script by pointing to the top-level '
+		                 'folder output by MinKNOW for a single flowcell.')
+		raise ValueError
+	fq_pass_dir = list(fq_pass)[0]
+	metadata_dir = os.path.realpath(fq_pass_dir.split('fastq_pass')[0])
 	sequencing_files = glob.glob(metadata_dir + '/sequencing_summary_*')
 	throughput_files = glob.glob(metadata_dir + '/throughput_*')
 
