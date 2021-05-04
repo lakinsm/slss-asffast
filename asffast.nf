@@ -10,10 +10,52 @@ forks = params.forks
 final_flag = params.final_flag
 
 
+if( params.throughput != 'NONE_T' ) {
+	throughput = Channel.fromPath("$params.throughput")
+}
+
+
+if( params.sequencing != 'NONE_S' ) {
+	sequencing = Channel.fromPath("$params.sequencing")
+}
+
+
 Channel
     .fromPath( params.reads )
     .map{ in -> tuple("$in", in.getSimpleName(), file(in)) }
     .into{ fastq_barcodes; fastq_nobarcodes }
+
+
+process PlotMinknowMetadata {
+	publishDir "${params.output}/FlowcellRunMetadata", mode: "copy"
+
+	input:
+		file thrfile from throughput.collect()
+		file seqfile from sequencing.collect()
+	output:
+		file("outdir/nanopore_filecounts.csv")
+		file("outdir/nanopore_throughput.csv")
+		file("outdir/nanopore_stats_overall.txt")
+		file("outdir/filecount_timeseries_graph.pdf")
+		file("outdir/throughput_timeseries_graph.pdf")
+
+	when:
+		final_flag
+
+	if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
+		"""
+		plot_nanopore_metadata.py $seqfile $thrfile outdir
+		"""
+	else
+		"""
+		mkdir outdir
+		touch outdir/nanopore_filecounts.csv
+		touch outdir/nanopore_throughput.csv
+		touch outdir/nanopore_stats_overall.txt
+		touch outdir/filecount_timeseries_graph.pdf
+		touch outdir/throughput_timeseries_graph.pdf
+		"""
+}
 
 
 process BwaIndexReference {

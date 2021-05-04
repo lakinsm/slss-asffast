@@ -321,6 +321,20 @@ if __name__ == '__main__':
 
 	# Start final Nextflow run with genomic subset of reference
 	sys.stdout.write('Beginning final Nextflow run...\n\n')
+
+	# Find metadata files if they exist and optionally include in the final run
+	fq_pass = glob.iglob(args.input + '/**/fastq_pass', recursive=True)
+	metadata_dir = os.path.realpath(fq_pass.split('fastq_pass')[0])
+	sequencing_files = glob.glob(metadata_dir + '/sequencing_summary_*')
+	throughput_files = glob.glob(metadata_dir + '/throughput_*')
+
+	globstar_sequencing_path = None
+	globstar_througput_path = None
+	if len(sequencing_files) > 0:
+		globstar_sequencing_path = metadata_dir + '/sequencing_summary_*'
+	if len(throughput_files) > 0:
+		globstar_througput_path = metadata_dir + '/throughput_*'
+
 	if barcode_flag:
 		nextflow_arglist = [
 			nextflow_path,
@@ -367,6 +381,8 @@ if __name__ == '__main__':
 			nextflow_arglist[13] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 		else:
 			nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
+	if globstar_sequencing_path and globstar_througput_path:
+		nextflow_arglist += ['--throughput', globstar_througput_path, '--sequencing', globstar_sequencing_path]
 	p = subprocess.Popen([str(x) for x in nextflow_arglist])
 	exit_code = p.wait()
 	sys.stdout.write('\n')
