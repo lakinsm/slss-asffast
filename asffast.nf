@@ -185,7 +185,7 @@ process MergeAlignedSamFiles {
 
 
 process PlotAlignmentCurves {
-	publishDir "${params.output}/CoverageAnalysis", mode: "copy"
+	publishDir "${params.output}/AlignmentTimeseries", mode: "copy"
 
 	input:
 		file seqfile from sequencing_cov.collect()

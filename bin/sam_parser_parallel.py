@@ -496,7 +496,7 @@ if __name__ == '__main__':
 			top_targets = find_top_targets(cov_dict)
 			n_windows = 500  # Number of points to graph rolling avg for coverage plots
 			sample_id = barcode_to_sample_id[barcode]
-			pdf_path = '{}_{}_coverage_results.pdf'.format(barcode, sample_id)
+			pdf_path = '{}_{}_{}'.format(barcode, sample_id, args.output_pdf)
 			with PdfPages(pdf_path) as pdf:
 				for t in top_targets:
 					# k = 2n / (m + 1)
