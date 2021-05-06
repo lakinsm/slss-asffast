@@ -94,7 +94,7 @@ process BwaAlignNoBarcodes {
 	script:
 		def barcode_match = "barcode00"
     """
-	bwa mem -t $threads -R '@RG\tID:'"$barcode_match"'\tSM:'"$barcode_match" $reference_db $reads > ${barcode_match}_${file_id}.sam
+	bwa mem -t $threads -R "@RG\\tID:${barcode_match}\\tSM:${barcode_match}" $reference_db $reads > ${barcode_match}_${file_id}.sam
     """
 }
 
@@ -115,7 +115,7 @@ process BwaAlignWithBarcodes {
     script:
         def barcode_match = getBarcode(full_name).findAll().first()[1]
     """
-	bwa mem -t $threads -R '@RG\tID:'"$barcode_match"'\tSM:'"$barcode_match" $reference_db $reads > ${barcode_match}_${file_id}.sam
+	bwa mem -t $threads -R "@RG\\tID:${barcode_match}\\tSM:${barcode_match}" $reference_db $reads > ${barcode_match}_${file_id}.sam
     """
 }
 
