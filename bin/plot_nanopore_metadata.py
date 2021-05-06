@@ -57,7 +57,7 @@ def plot_data(fcount_data, thr_data, aln_data, output_pdf_dir):
 		plt.close()
 
 	# Alignment data dict(target: [ydat])
-	x = np.array(range(len(aln_data[aln_data.keys()[0]][0])))
+	x = np.array(range(len(aln_data[list(aln_data.keys())[0]][0])))
 	plt.figure(figsize=(15, 10))
 	axes = plt.gca()
 	axes.set_xlim((x[0], x[-1]))
