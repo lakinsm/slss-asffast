@@ -195,10 +195,6 @@ def format_alignment_data(sam, ref):
 			cur_len = idx_min
 		for i in range(len(targets)):
 			cov[targets[i]].update(parse_cigar(cigars[i], starts[i] - 1))
-			debug = parse_cigar(cigars[i], starts[i] - 1)
-			for x in debug:
-				if x >= ref[targets[i]] or x < 0:
-					print(targets[i], cigars[i], x)
 	last_cov = [(v[-1], k) for k, v in ret.items()]
 	tops = set(j for _, j in sorted(last_cov, reverse=True)[:5])
 	return {k: v for k, v in ret.items() if k in tops}
