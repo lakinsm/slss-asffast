@@ -69,7 +69,7 @@ process PlotAlignmentCurves {
 
 	input:
 		file seqfile from sequencing.collect()
-		each file(sam from alignment_curves
+		each file(sam) from alignment_curves
 	output:
 		file("*alignment_timeseries_graph.pdf")
 		file("*alignment_timeseries_data.csv")

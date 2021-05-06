@@ -20,8 +20,8 @@ def plot_data(aln_data, aln_order, barcode, output_pdf_dir):
 	axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 	axes.ticklabel_format(useOffset=False)
 
-	aln_pdf = '{}/{}_alignment_timeseries_data.csv'.format(output_pdf_dir, barcode)
-	with PdfPages(aln_pdf) as pdf_handle3:
+	aln_pdf = '{}/{}_alignment_timeseries_data.pdf'.format(output_pdf_dir, barcode)
+	with PdfPages(aln_pdf) as pdf_handle:
 		counter = 0
 		for target in aln_order:
 			plt.plot(x, aln_data[target], marker='', color=colors[counter], label=target)
@@ -30,7 +30,7 @@ def plot_data(aln_data, aln_order, barcode, output_pdf_dir):
 		plt.xlabel('Minutes of Sequencing')
 		plt.ylabel('Percent ASFV Genomic Coverage')
 		plt.title('Percent ASFV Genome Coverage by Minutes of Sequencing, Top 5 Targets')
-		pdf_handle3.savefig()
+		pdf_handle.savefig()
 		plt.close()
 
 
@@ -46,7 +46,6 @@ def write_timeseries(aln_data, barcode, output_csv_dir):
 					i,
 					cov
 				))
-
 	plot_data(aln_data, target_order, barcode, output_csv_dir)
 
 
