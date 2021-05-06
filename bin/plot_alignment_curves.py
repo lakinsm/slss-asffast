@@ -217,7 +217,7 @@ def format_alignment_data(sam, ref):
 
 if __name__ == '__main__':
 	sam_data, ref_data = parse_sam(sys.argv[1])
-	seqfile_data, sam_data = parse_seqfile(sys.argv[2], sam_data)
+	sam_data = parse_seqfile(sys.argv[2], sam_data)
 	aln_data = format_alignment_data(sam_data, ref_data)
 	barcode = sys.argv[1].split('/')[-1].split('_')[0]
 	write_timeseries(aln_data, barcode, sys.argv[3])
