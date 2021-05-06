@@ -64,32 +64,6 @@ process PlotMinknowMetadata {
 }
 
 
-process PlotAlignmentCurves {
-	publishDir "${params.output}/CoverageAnalysis", mode: "copy"
-
-	input:
-		file seqfile from sequencing.collect()
-		each file(sam) from alignment_curves
-	output:
-		file("*alignment_timeseries_graph.pdf")
-		file("*alignment_timeseries_data.csv")
-
-	when:
-		final_flag
-
-	script:
-		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
-			"""
-			plot_alignment_curves.py $sam $seqfile .
-			"""
-		else
-			"""
-			touch alignment_timeseries_graph.pdf
-			touch alignment_timeseries_data.csv
-			"""
-}
-
-
 process BwaIndexReference {
 	input:
 		path db_dir from reference_db
@@ -205,6 +179,32 @@ process MergeAlignedSamFiles {
 	echo "$file_list" > list_of_inputs.txt
 	merge_sam_files.py list_of_inputs.txt
 	"""
+}
+
+
+process PlotAlignmentCurves {
+	publishDir "${params.output}/CoverageAnalysis", mode: "copy"
+
+	input:
+		file seqfile from sequencing.collect()
+		each file(sam) from alignment_curves
+	output:
+		file("*alignment_timeseries_graph.pdf")
+		file("*alignment_timeseries_data.csv")
+
+	when:
+		final_flag
+
+	script:
+		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
+			"""
+			plot_alignment_curves.py $sam $seqfile .
+			"""
+		else
+			"""
+			touch alignment_timeseries_graph.pdf
+			touch alignment_timeseries_data.csv
+			"""
 }
 
 
