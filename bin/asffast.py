@@ -138,6 +138,23 @@ def get_real_dir(infile):
 	return os.path.dirname(os.path.realpath(infile))
 
 
+def get_create_real_dir(inpath):
+	real_work_dir = os.path.realpath(inpath)
+	dirname = inpath.rstrip('/').split('/')[-1]
+	if os.path.isdir(real_work_dir):
+		return real_work_dir
+	else:
+		parent_dir = '/'.join(inpath.rstrip('/').split('/')[:-1])
+		real_parent_dir = os.path.realpath(parent_dir)
+		if not os.path.isdir(real_parent_dir):
+			sys.stderr.write('Error: {} is not a directory. For the working directory, at least '
+			                 'its parent directory must exist.\n')
+			raise ValueError
+		real_dirpath = real_parent_dir + '/' + dirname
+		os.mkdir(real_dirpath)
+	return real_dirpath
+
+
 def report_intermediate_coverage(infile, n=3):
 	end_col = '\u001b[0m'
 	sys.stdout.write('\n{:%Y-%m-%d %H:%M:%S} Coverage Results for Top {} Genomes Per Barcode:\n\n'.format(
@@ -211,8 +228,7 @@ parser.add_argument('--wait', type=int, default=1,
 
 if __name__ == '__main__':
 	args = parser.parse_args()
-	nextflow_work_dir = get_real_dir(args.working_dir)
-	nextflow_work_dir += '/' + nextflow_work_dir.rstrip('/').split('/')[-1]
+	nextflow_work_dir = get_create_real_dir(args.working_dir)
 	nextflow_path = '/'.join(get_real_dir(sys.argv[0]).split('/')[:-1]) + '/asffast.nf'
 	nextflow_config = nextflow_path.replace('asffast.nf', 'nextflow.config')
 	globstar_input_path = None
