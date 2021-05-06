@@ -38,15 +38,12 @@ process PlotMinknowMetadata {
 	input:
 		file thrfile from throughput.collect()
 		file seqfile from sequencing.collect()
-		each file(sam) from alignment_curves
 	output:
 		file("nanopore_filecounts.csv")
 		file("nanopore_throughput.csv")
 		file("nanopore_stats_overall.txt")
 		file("filecount_timeseries_graph.pdf")
 		file("throughput_timeseries_graph.pdf")
-		file("aligned_timeseries_graph.pdf")
-		file("alignment_timeseries.csv")
 
 	when:
 		final_flag
@@ -54,7 +51,7 @@ process PlotMinknowMetadata {
 	script:
 		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
 			"""
-			plot_nanopore_metadata.py $seqfile $thrfile $sam .
+			plot_nanopore_metadata.py $seqfile $thrfile .
 			"""
 		else
 			"""
@@ -63,8 +60,32 @@ process PlotMinknowMetadata {
 			touch nanopore_stats_overall.txt
 			touch filecount_timeseries_graph.pdf
 			touch throughput_timeseries_graph.pdf
-			touch aligned_timeseries_graph.pdf
-			touch alignment_timeseries.csv
+			"""
+}
+
+
+process PlotAlignmentCurves {
+	publishDir "${params.output}/CoverageAnalysis", mode: "copy"
+
+	input:
+		file seqfile from sequencing.collect()
+		each file(sam from alignment_curves
+	output:
+		file("*alignment_timeseries_graph.pdf")
+		file("*alignment_timeseries_data.csv")
+
+	when:
+		final_flag
+
+	script:
+		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
+			"""
+			plot_alignment_curves.py $sam $seqfile .
+			"""
+		else
+			"""
+			touch alignment_timeseries_graph.pdf
+			touch alignment_timeseries_data.csv
 			"""
 }
 
@@ -149,9 +170,7 @@ process CoverageAnalysisFinal {
 		val(file_list) from final_coverage_data1.mix(final_coverage_data2).toList()
 	output:
 		file("coverage_results.csv") into (cov_res)
-		file("*coverage_results.pdf")
-		file("*timeseries_results.csv")
-		file("*timeseries_results.pdf")
+		file("*coverage_plots.pdf")
 		file("*aligned_reads.fasta")
 
 	when:
@@ -163,8 +182,7 @@ process CoverageAnalysisFinal {
 	sam_parser_parallel.py \
 	-i list_of_inputs.txt \
 	-oc coverage_results.csv \
-	-op coverage_results.pdf \
-	-ot timeseries_results.csv \
+	-op coverage_plots.pdf \
 	-r \
 	--threads $forks \
 	--final
