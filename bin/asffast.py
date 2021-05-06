@@ -199,6 +199,8 @@ parser.add_argument('-w', '--working_dir', type=str, default='/tmp',
 					help='Path to working directory for the Python watcher script')
 parser.add_argument('-s', '--singularity', type=str, default=None,
                     help='Path to Singularity container if other than default (pulls from cloud if this argument isn\'t used)')
+parser.add_argument('-p', '--prefix', type=str, default=None,
+                    help='Optional flowcell or sample ID, defaults to Flowcell1')
 parser.add_argument('--slurm', action='store_true', default=False,
                     help='Flag for use of SLURM for HPC clusters.  Modify {} to change cluster options.'.format(
 						SLURM_CONFIG
@@ -210,8 +212,7 @@ parser.add_argument('--wait', type=int, default=1,
 if __name__ == '__main__':
 	args = parser.parse_args()
 	nextflow_work_dir = get_real_dir(args.working_dir)
-	# if nextflow_work_dir.rstrip('/').split('/')[-1] != 'work':
-	# 	nextflow_work_dir += '/work'
+	nextflow_work_dir += '/' + nextflow_work_dir.rstrip('/').split('/')[-1]
 	nextflow_path = '/'.join(get_real_dir(sys.argv[0]).split('/')[:-1]) + '/asffast.nf'
 	nextflow_config = nextflow_path.replace('asffast.nf', 'nextflow.config')
 	globstar_input_path = None
@@ -389,6 +390,8 @@ if __name__ == '__main__':
 			nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 	if globstar_sequencing_path and globstar_througput_path:
 		nextflow_arglist += ['--throughput', globstar_througput_path, '--sequencing', globstar_sequencing_path]
+	if args.prefix:
+		nextflow_arglist += ['--out_prefix', args.prefix]
 	p = subprocess.Popen([str(x) for x in nextflow_arglist])
 	exit_code = p.wait()
 	sys.stdout.write('\n')

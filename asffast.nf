@@ -8,6 +8,7 @@ reference_db = file(params.db)
 threads = params.threads
 forks = params.forks
 final_flag = params.final_flag
+out_prefix = params.out_prefix
 
 
 if( params.throughput != 'NONE_T' ) {
@@ -37,12 +38,15 @@ process PlotMinknowMetadata {
 	input:
 		file thrfile from throughput.collect()
 		file seqfile from sequencing.collect()
+		each file(sam) from alignment_curves
 	output:
 		file("nanopore_filecounts.csv")
 		file("nanopore_throughput.csv")
 		file("nanopore_stats_overall.txt")
 		file("filecount_timeseries_graph.pdf")
 		file("throughput_timeseries_graph.pdf")
+		file("aligned_timeseries_graph.pdf")
+		file("alignment_timeseries.csv")
 
 	when:
 		final_flag
@@ -50,7 +54,7 @@ process PlotMinknowMetadata {
 	script:
 		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
 			"""
-			plot_nanopore_metadata.py $seqfile $thrfile .
+			plot_nanopore_metadata.py $seqfile $thrfile $sam .
 			"""
 		else
 			"""
@@ -59,6 +63,8 @@ process PlotMinknowMetadata {
 			touch nanopore_stats_overall.txt
 			touch filecount_timeseries_graph.pdf
 			touch throughput_timeseries_graph.pdf
+			touch aligned_timeseries_graph.pdf
+			touch alignment_timeseries.csv
 			"""
 }
 
@@ -71,6 +77,7 @@ process BwaIndexReference {
 
 	"""
 	bwa index $db_dir
+	samtools faidx $db_dir
 	"""
 }
 
@@ -171,7 +178,7 @@ process MergeAlignedSamFiles {
 	input:
 		val(file_list) from final_data1.mix(final_data2).toList()
 	output:
-		file("*aligned_reads.sam") into (consensus_sam)
+		file("*aligned_reads.sam") into (consensus_sam, alignment_curves)
 
 	when:
 		final_flag
@@ -189,17 +196,20 @@ process ProduceConsensus {
 		each file(sam) from consensus_sam
 		file(ref) from reference_db
 	output:
-		file("*consensus.fasta")
+		file("${out_prefix}_${this_barcode}.vcf.gz")
+		file("${out_prefix}_${this_barcode}_consensus.fasta")
 
 	when:
 		final_flag
 
-	"""
-	samtools view -bS $sam | samtools sort - -o ${sam}_sorted.bam
-
-	bcftools mpileup -d 500 -f $ref ${sam}_sorted.bam | bcftools call -c | vcfutils.pl vcf2fq > ${sam}.fastq
-	fastq_to_fasta.py ${sam}.fastq > ${sam}_consensus.fasta
-	"""
+	script:
+		def this_barcode = getBarcode(sam.name).findAll().first()[1]
+		"""
+		samtools view -bS $sam | samtools sort - -o ${out_prefix}_${this_barcode}.bam
+		freebayes -p 1 --standard-filters --min-coverage 10 -f $ref ${out_prefix}_${this_barcode}.bam | vcffilter -f "QUAL > 20" | bcftools view -Oz -o ${out_prefix}_${this_barcode}.vcf.gz
+		bcftools index ${out_prefix}_${this_barcode}.vcf.gz
+		cat $ref | bcftools consensus ${out_prefix}_${this_barcode}.vcf.gz > ${out_prefix}_${this_barcode}_consensus.fasta
+		"""
 }
 
 
@@ -224,6 +234,7 @@ def help() {
     println "    --output        STR      path to output directory"
     println "    --db            STR      path to pre-made BLAST database to query against"
     println "    --barcodes      FLAG     input directory structure includes barcode folders"
+    println "    --out_prefix    STR      output file/consensus prefix, e.g. flowcell or sample ID"
     println ""
     println "Algorithm options:"
     println ""
