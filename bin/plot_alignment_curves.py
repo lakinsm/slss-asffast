@@ -137,12 +137,11 @@ class SamParser(object):
 		self.handle.close()
 
 
-def parse_cigar(s, t_idx, rev):
+def parse_cigar(s, t_idx):
 	"""
 	Parse SAM CIGAR alignment string and return indices to which the read aligned.
 	:param s: STR, CIGAR string
 	:param t_idx: INT, zero-based index for target start position
-	:param rev: BOOL, read aligned in reverse orientation if true
 	:return: tuple of integers, zero-indexed indices to which the read aligned
 	"""
 	ret = ()
@@ -153,28 +152,16 @@ def parse_cigar(s, t_idx, rev):
 			num += s[c_idx]
 		else:
 			op = s[c_idx]
-			if rev:
-				if op == 'M' or op == '=':
-					ret += tuple(range(t_idx - int(num) + 1, t_idx + 1))
-					t_idx -= int(num)
-				elif op == 'D':
-					t_idx -= int(num)
-				elif op == 'N':
-					t_idx -= int(num)
-				elif op == 'X':
-					ret += tuple(range(t_idx - int(num) + 1, t_idx + 1))
-					t_idx -= int(num)
-			else:
-				if op == 'M' or op == '=':
-					ret += tuple(range(t_idx, t_idx + int(num)))
-					t_idx += int(num)
-				elif op == 'D':
-					t_idx += int(num)
-				elif op == 'N':
-					t_idx += int(num)
-				elif op == 'X':
-					ret += tuple(range(t_idx, t_idx + int(num)))
-					t_idx += int(num)
+			if op == 'M' or op == '=':
+				ret += tuple(range(t_idx, t_idx + int(num)))
+				t_idx += int(num)
+			elif op == 'D':
+				t_idx += int(num)
+			elif op == 'N':
+				t_idx += int(num)
+			elif op == 'X':
+				ret += tuple(range(t_idx, t_idx + int(num)))
+				t_idx += int(num)
 			num = ''
 		c_idx += 1
 	return ret
@@ -183,15 +170,14 @@ def parse_cigar(s, t_idx, rev):
 def parse_sam(infile):
 	ret = {}
 	sam_parser = SamParser(infile)
-	for header, rev, thead, tstart, cigar in sam_parser:
+	for header, _, thead, tstart, cigar in sam_parser:
 		if header not in ret:
-			# sequencing sectime, target_list, start_idx_list, rev_list, cigar_list
-			ret[header] = [None, (thead,), (tstart,), (rev,), (cigar,)]
+			# sequencing sectime, target_list, start_idx_list, cigar_list
+			ret[header] = [None, (thead,), (tstart,), (cigar,)]
 		else:
 			ret[header][1] += (thead,)
 			ret[header][2] += (tstart,)
-			ret[header][3] += (rev,)
-			ret[header][4] += (cigar,)
+			ret[header][3] += (cigar,)
 	return ret, sam_parser.ref_len
 
 
@@ -200,7 +186,7 @@ def format_alignment_data(sam, ref):
 	cov = {x: set() for x in ref.keys()}
 	ref_sets = {k: set(range(v)) for k, v in ref.items()}
 	cur_len = 1
-	for sec, targets, starts, revs, cigars in sam:
+	for sec, targets, starts, cigars in sam:
 		idx_min = int(np.ceil(sec / 60.))
 		if idx_min > cur_len:
 			for target, covlist in ret.items():
@@ -208,8 +194,8 @@ def format_alignment_data(sam, ref):
 				covlist += [cov_val for _ in range(idx_min - cur_len)]
 			cur_len = idx_min
 		for i in range(len(targets)):
-			cov[targets[i]].update(parse_cigar(cigars[i], starts[i] - 1, revs[i]))
-			debug = parse_cigar(cigars[i], starts[i] - 1, revs[i])
+			cov[targets[i]].update(parse_cigar(cigars[i], starts[i] - 1))
+			debug = parse_cigar(cigars[i], starts[i] - 1)
 			for x in debug:
 				if x >= ref[targets[i]] or x < 0:
 					print(targets[i], cigars[i], x)

@@ -101,12 +101,11 @@ class SamParser(object):
 			self.output_handle.close()
 
 
-def parse_cigar(s, t_idx, rev):
+def parse_cigar(s, t_idx):
 	"""
 	Parse SAM CIGAR alignment string and return indices to which the read aligned.
 	:param s: STR, CIGAR string
 	:param t_idx: INT, zero-based index for target start position
-	:param rev: BOOL, read aligned in reverse orientation if true
 	:return: tuple of integers, zero-indexed indices to which the read aligned
 	"""
 	ret = ()
@@ -117,28 +116,16 @@ def parse_cigar(s, t_idx, rev):
 			num += s[c_idx]
 		else:
 			op = s[c_idx]
-			if rev:
-				if op == 'M' or op == '=':
-					ret += tuple(range(t_idx - int(num) + 1, t_idx + 1))
-					t_idx -= int(num)
-				elif op == 'D':
-					t_idx -= int(num)
-				elif op == 'N':
-					t_idx -= int(num)
-				elif op == 'X':
-					ret += tuple(range(t_idx - int(num) + 1, t_idx + 1))
-					t_idx -= int(num)
-			else:
-				if op == 'M' or op == '=':
-					ret += tuple(range(t_idx, t_idx + int(num)))
-					t_idx += int(num)
-				elif op == 'D':
-					t_idx += int(num)
-				elif op == 'N':
-					t_idx += int(num)
-				elif op == 'X':
-					ret += tuple(range(t_idx, t_idx + int(num)))
-					t_idx += int(num)
+			if op == 'M' or op == '=':
+				ret += tuple(range(t_idx, t_idx + int(num)))
+				t_idx += int(num)
+			elif op == 'D':
+				t_idx += int(num)
+			elif op == 'N':
+				t_idx += int(num)
+			elif op == 'X':
+				ret += tuple(range(t_idx, t_idx + int(num)))
+				t_idx += int(num)
 			num = ''
 		c_idx += 1
 	return ret
@@ -356,8 +343,8 @@ def worker(infile):
 	barcode_id = infile.split('/')[-1].split('_')[0]
 	sample_id = infile.split('/')[-1].replace(barcode_id + '_', '').replace('.sam', '')
 	sam_parser = SamParser(infile)
-	for query, q_reverse, target, t_start, cigar in sam_parser:
-		idxs = parse_cigar(cigar, t_start - 1, q_reverse)
+	for query, _, target, t_start, cigar in sam_parser:
+		idxs = parse_cigar(cigar, t_start - 1)
 		if target not in ref_cov:
 			ref_cov[target] = set()
 		for idx in idxs:
@@ -371,8 +358,8 @@ def final_worker(infile):
 	sample_id = infile.split('/')[-1].replace(barcode_id + '_', '').replace('.sam', '')
 	timepoint = infile.split('/')[-1].replace('.sam', '').split('_')[-1]
 	sam_parser = SamParser(infile, output_reads='{}_{}_aligned_reads.fasta'.format(timepoint, barcode_id))
-	for query, q_reverse, target, t_start, cigar in sam_parser:
-		idxs = parse_cigar(cigar, t_start - 1, q_reverse)
+	for query, _, target, t_start, cigar in sam_parser:
+		idxs = parse_cigar(cigar, t_start - 1)
 		if target not in ref_cov:
 			ref_cov[target] = {}
 		for i in idxs:
