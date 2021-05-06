@@ -139,6 +139,6 @@ def parse_throughfile(infile):
 
 
 if __name__ == '__main__':
-	seqfile_data, sam_data = parse_seqfile(sys.argv[1])
+	seqfile_data = parse_seqfile(sys.argv[1])
 	through_data = parse_throughfile(sys.argv[2])
 	write_timeseries(seqfile_data, through_data, sys.argv[3])
