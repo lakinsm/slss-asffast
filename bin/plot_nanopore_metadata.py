@@ -56,8 +56,8 @@ def plot_data(fcount_data, thr_data, aln_data, output_pdf_dir):
 		pdf_handle2.savefig()
 		plt.close()
 
-	# Alignment data tuple((target, [ydat]), ...)
-	x = np.array(range(len(aln_data[0][1])))
+	# Alignment data dict(target: [ydat])
+	x = np.array(range(len(aln_data.values()[0])))
 	plt.figure(figsize=(15, 10))
 	axes = plt.gca()
 	axes.set_xlim((x[0], x[-1]))
@@ -69,7 +69,7 @@ def plot_data(fcount_data, thr_data, aln_data, output_pdf_dir):
 	aln_pdf = output_pdf_dir + '/aligned_timeseries_graph.pdf'
 	with PdfPages(aln_pdf) as pdf_handle3:
 		counter = 0
-		for target, ydat in aln_data:
+		for target, ydat in aln_data.items():
 			plt.plot(x, ydat, marker='', color=colors[counter], label=target)
 			counter += 1
 		plt.legend()
