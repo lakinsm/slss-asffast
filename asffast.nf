@@ -20,10 +20,12 @@ else {
 
 
 if( params.sequencing != 'NONE_S' ) {
-	sequencing = Channel.fromPath("$params.sequencing")
+	sequencing_qc = Channel.fromPath("$params.sequencing")
+	sequencing_cov = Channel.fromPath("$params.sequencing")
 }
 else {
-	sequencing = params.sequencing
+	sequencing_qc = params.sequencing
+	sequencing_cov = params.sequencing
 }
 
 Channel
@@ -37,7 +39,7 @@ process PlotMinknowMetadata {
 
 	input:
 		file thrfile from throughput.collect()
-		file seqfile from sequencing.collect()
+		file seqfile from sequencing_qc.collect()
 	output:
 		file("nanopore_filecounts.csv")
 		file("nanopore_throughput.csv")
@@ -186,7 +188,7 @@ process PlotAlignmentCurves {
 	publishDir "${params.output}/CoverageAnalysis", mode: "copy"
 
 	input:
-		file seqfile from sequencing.collect()
+		file seqfile from sequencing_cov.collect()
 		each file(sam) from alignment_curves
 	output:
 		file("*alignment_timeseries_graph.pdf")
