@@ -75,7 +75,7 @@ def plot_data(fcount_data, thr_data, aln_data, output_pdf_dir):
 		plt.legend()
 		plt.xlabel('Minutes of Sequencing')
 		plt.ylabel('Percent ASFV Genomic Coverage')
-		plt.title('Percent ASFV Genome Coverage by Minutes of Sequencing')
+		plt.title('Percent ASFV Genome Coverage by Minutes of Sequencing, Top 5 Targets')
 		pdf_handle3.savefig()
 		plt.close()
 
@@ -127,7 +127,7 @@ def write_timeseries(seq_dict, through_data, aln_data, output_csv_dir):
 
 	with open(output_csv_dir + '/alignment_timeseries.csv', 'w') as acsv_out:
 		acsv_out.write('target,timepoint,percent_cov\n')
-		for target, covdat in aln_data:
+		for target, covdat in aln_data.items():
 			for i, cov in enumerate(covdat):
 				acsv_out.write('{},{},{}\n'.format(
 					target,
