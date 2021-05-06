@@ -313,7 +313,7 @@ def format_alignment_data(sam, ref):
 		idx_min = int(np.ceil(sec / 60.))
 		if idx_min > cur_len:
 			for target, covlist in ret.items():
-				cov_val = 100. * float(len(cov[target])) / float(ref[target])
+				cov_val = 100. * float(len(cov[target].intersection(set(range(ref[target]))))) / float(ref[target])
 				covlist += [cov_val for _ in range(idx_min - cur_len)]
 			cur_len = idx_min
 		for i in range(len(targets)):
