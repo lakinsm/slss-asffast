@@ -317,8 +317,11 @@ def format_alignment_data(sam, ref):
 				covlist += [cov_val for _ in range(idx_min - cur_len)]
 			cur_len = idx_min
 		for i in range(len(targets)):
-			print(cigars[i], parse_cigar(cigars[i], starts[i], revs[i]))
-			cov[targets[i]].add(parse_cigar(cigars[i], starts[i], revs[i]))
+			print(cigars[i], len(parse_cigar(cigars[i], starts[i] - 1, revs[i])))
+			print(cov[targets[i]])
+			cov[targets[i]].add(parse_cigar(cigars[i], starts[i] - 1, revs[i]))
+			print(cov[targets[i]])
+			sys.exit()
 	last_cov = [(v[-1], k) for k, v in ret.items()]
 	print(last_cov)
 	for k, v in cov.items():
