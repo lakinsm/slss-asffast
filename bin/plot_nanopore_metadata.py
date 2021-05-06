@@ -320,9 +320,6 @@ def format_alignment_data(sam, ref):
 		for i in range(len(targets)):
 			cov[targets[i]].update(parse_cigar(cigars[i], starts[i] - 1, revs[i]))
 	last_cov = [(v[-1], k) for k, v in ret.items()]
-	print(last_cov)
-	for k, v in cov.items():
-		print(k, len(v), ref[k])
 	tops = set(j for _, j in sorted(last_cov, reverse=True)[:5])
 	return {k: v for k, v in ret.items() if k in tops}
 
