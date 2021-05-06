@@ -8,7 +8,7 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.backends.backend_pdf import PdfPages
 
 
-def plot_data(fcount_data, thr_data, aln_data, output_pdf_dir):
+def plot_data(fcount_data, thr_data, aln_data, aln_order, output_pdf_dir):
 	# Filecount data
 	y = np.array(fcount_data)
 	x = np.array(range(len(fcount_data)))
@@ -69,8 +69,8 @@ def plot_data(fcount_data, thr_data, aln_data, output_pdf_dir):
 	aln_pdf = output_pdf_dir + '/aligned_timeseries_graph.pdf'
 	with PdfPages(aln_pdf) as pdf_handle3:
 		counter = 0
-		for target, ydat in aln_data.items():
-			plt.plot(x, ydat, marker='', color=colors[counter], label=target)
+		for target in aln_order:
+			plt.plot(x, aln_data[target], marker='', color=colors[counter], label=target)
 			counter += 1
 		plt.legend()
 		plt.xlabel('Minutes of Sequencing')
@@ -125,17 +125,19 @@ def write_timeseries(seq_dict, through_data, aln_data, output_csv_dir):
 			through_data[-1][3]
 		))
 
+	target_order = [(v[-1], k) for k, v in aln_data.items()]
+	target_order = [x for _, x in sorted(target_order, reverse=True)]
 	with open(output_csv_dir + '/alignment_timeseries.csv', 'w') as acsv_out:
 		acsv_out.write('target,timepoint,percent_cov\n')
-		for target, covdat in aln_data.items():
-			for i, cov in enumerate(covdat):
+		for target in target_order:
+			for i, cov in enumerate(aln_data[target]):
 				acsv_out.write('{},{},{}\n'.format(
 					target,
 					i,
 					cov
 				))
 
-	plot_data(filecounts, through_data, aln_data, output_csv_dir)
+	plot_data(filecounts, through_data, aln_data, target_order, output_csv_dir)
 
 
 def parse_seqfile(infile, sam_dict):
