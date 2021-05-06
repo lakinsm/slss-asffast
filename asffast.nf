@@ -198,7 +198,7 @@ process PlotAlignmentCurves {
 		final_flag
 
 	script:
-		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
+		if( seqfile.name != 'NONE_S' )
 			"""
 			plot_alignment_curves.py $sam $seqfile .
 			"""
