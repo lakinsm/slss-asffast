@@ -319,6 +319,9 @@ def format_alignment_data(sam, ref):
 		for i in range(len(targets)):
 			cov[targets[i]].add(parse_cigar(cigars[i], starts[i], revs[i]))
 	last_cov = [(v[-1], k) for k, v in ret.items()]
+	print(last_cov)
+	for k, v in cov.items():
+		print(k, len(v), ref[k])
 	tops = set(j for _, j in sorted(last_cov, reverse=True)[:5])
 	return {k: v for k, v in ret.items() if k in tops}
 
@@ -328,5 +331,4 @@ if __name__ == '__main__':
 	seqfile_data, sam_data = parse_seqfile(sys.argv[2], sam_data)
 	through_data = parse_throughfile(sys.argv[3])
 	aln_data = format_alignment_data(sorted(sam_data.values()), ref_lens)
-	print(aln_data)
 	write_timeseries(seqfile_data, through_data, aln_data, sys.argv[4])
