@@ -318,7 +318,9 @@ def format_alignment_data(sam, ref):
 			cur_len = idx_min
 		for i in range(len(targets)):
 			cov[targets[i]].add(parse_cigar(cigars[i], starts[i], revs[i]))
-	return ret
+	last_cov = [(v[-1], k) for k, v in ret.items()]
+	tops = set(j for _, j in sorted(last_cov, reverse=True)[:5])
+	return {k: v for k, v in ret.items() if k in tops}
 
 
 if __name__ == '__main__':
