@@ -74,7 +74,6 @@ process BwaIndexReference {
 
 	"""
 	bwa index $db_dir
-	samtools faidx $db_dir
 	"""
 }
 
@@ -95,7 +94,7 @@ process BwaAlignNoBarcodes {
 	script:
 		def barcode_match = "barcode00"
     """
-	bwa mem -t $threads $reference_db $reads > ${barcode_match}_${file_id}.sam
+	bwa mem -t $threads -R '@RG\tID:'"$barcode_match"'\tSM:'"$barcode_match" $reference_db $reads > ${barcode_match}_${file_id}.sam
     """
 }
 
@@ -116,7 +115,7 @@ process BwaAlignWithBarcodes {
     script:
         def barcode_match = getBarcode(full_name).findAll().first()[1]
     """
-	bwa mem -t $threads $reference_db $reads > ${barcode_match}_${file_id}.sam
+	bwa mem -t $threads -R '@RG\tID:'"$barcode_match"'\tSM:'"$barcode_match" $reference_db $reads > ${barcode_match}_${file_id}.sam
     """
 }
 
@@ -216,8 +215,8 @@ process ProduceConsensus {
 		each file(sam) from consensus_sam
 		file(ref) from reference_db
 	output:
-		file("${out_prefix}_${this_barcode}.vcf.gz")
-		file("${out_prefix}_${this_barcode}_consensus.fasta")
+		file("*.vcf.gz")
+		file("*_consensus.fasta")
 
 	when:
 		final_flag
@@ -225,6 +224,7 @@ process ProduceConsensus {
 	script:
 		def this_barcode = getBarcode(sam.name).findAll().first()[1]
 		"""
+		samtools faidx $ref
 		samtools view -bS $sam | samtools sort - -o ${out_prefix}_${this_barcode}.bam
 		freebayes -p 1 --standard-filters --min-coverage 10 -f $ref ${out_prefix}_${this_barcode}.bam | vcffilter -f "QUAL > 20" | bcftools view -Oz -o ${out_prefix}_${this_barcode}.vcf.gz
 		bcftools index ${out_prefix}_${this_barcode}.vcf.gz
