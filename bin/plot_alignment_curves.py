@@ -20,7 +20,7 @@ def plot_data(aln_data, aln_order, barcode, output_pdf_dir):
 	axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 	axes.ticklabel_format(useOffset=False)
 
-	aln_pdf = '{}/{}_alignment_timeseries_data.pdf'.format(output_pdf_dir, barcode)
+	aln_pdf = '{}/{}_alignment_timeseries_graph.pdf'.format(output_pdf_dir, barcode)
 	with PdfPages(aln_pdf) as pdf_handle:
 		counter = 0
 		for target in aln_order:
