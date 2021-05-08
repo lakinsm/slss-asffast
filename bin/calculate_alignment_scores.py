@@ -12,7 +12,7 @@ from samscore.samscore import score_cigar
 
 
 if __name__ == '__main__':
-	sam_parser = SamParser(sys.argv[1])
+	sam_parser = SamParser(sys.argv[1], aln_scores=True)
 	for qheader, _, theader, tstart, cigar, aln_score in sam_parser:
 		score, idx_scores, matches, mismatches, insertions, deletions = score_cigar(cigar, tstart - 1)
 		print(qheader, '\t', score, len(matches), len(mismatches), len(insertions), len(deletions), '\t', aln_score, theader.split('|')[-1])
