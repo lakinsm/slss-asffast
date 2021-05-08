@@ -113,10 +113,10 @@ def score_cigar(s, t_idx, match=1, mismatch=-1, indel_start=-2, indel_extend=-1)
 	:param mismatch: INT, score/penalty for an alignment mismatch (mismatch of sequence to reference)
 	:param indel_start: INT, score/penalty for starting an insertion/deletion event
 	:param indel_extend: INT, score/penalty for extension of an existing insertion/deletion event
-	:return: tuple of tuple of integers, (score, (idx_scores), (match_idxs,), (mismatch_idxs,), (insert_idxs,), (delete_idxs,))
+	:return: tuple of tuples/lists of integers, (score, [idx_scores], (match_idxs,), (mismatch_idxs,), (insert_idxs,), (delete_idxs,))
 	"""
 	score = 0
-	idx_scores = tuple()
+	idx_scores = []
 	match_idxs = tuple()
 	mismatch_idxs = tuple()
 	insert_idxs = tuple()
@@ -131,18 +131,18 @@ def score_cigar(s, t_idx, match=1, mismatch=-1, indel_start=-2, indel_extend=-1)
 			op = s[c_idx]
 			if op == 'M' or op == '=':
 				match_idxs += tuple(range(t_idx, t_idx + int(num)))
-				idx_scores += tuple(match for _ in range(int(num)))
+				idx_scores += [match for _ in range(int(num))]
 				score += match * int(num)
 				t_idx += int(num)
 			elif op == 'D':
 				delete_idxs += tuple(range(t_idx, t_idx + int(num)))
-				idx_scores += (indel_start,)
-				idx_scores += tuple(indel_extend for _ in range(int(num) - 1))
+				idx_scores += [indel_start]
+				idx_scores += [indel_extend for _ in range(int(num) - 1)]
 				score += (indel_extend * (int(num) - 1)) + indel_start
 				t_idx += int(num)
 			elif op == 'N' or op == 'X':
 				mismatch_idxs += tuple(range(t_idx, t_idx + int(num)))
-				idx_scores += tuple(mismatch for _ in range(int(num)))
+				idx_scores += [mismatch for _ in range(int(num))]
 				score += mismatch + int(num)
 				t_idx += int(num)
 			elif op == 'I':
