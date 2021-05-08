@@ -15,4 +15,4 @@ if __name__ == '__main__':
 	sam_parser = SamParser(sys.argv[1])
 	for qheader, _, theader, tstart, cigar in sam_parser:
 		score, idx_scores, matches, mismatches, insertions, deletions = score_cigar(cigar, tstart - 1)
-		print(qheader, score, len(matches), len(mismatches), len(insertions), len(deletions))
+		print(qheader, theader, score, len(matches), len(mismatches), len(insertions), len(deletions))
