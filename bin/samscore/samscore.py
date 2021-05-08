@@ -1,5 +1,8 @@
 # Author: Steven Lakin
 
+import re
+
+
 class SamParser(object):
 	"""
 	Line-by-line parsing of Sequence Alignment Map (SAM) UTF-8 encoded files.  Stores alignment information for
@@ -8,12 +11,16 @@ class SamParser(object):
 	to exclude).  Aligning reads, if output, are output as they are parsed.
 	"""
 
-	def __init__(self, sam_path, capture_ref_len=True):
+	def __init__(self, sam_path, capture_ref_len=True, aln_scores=False):
 		"""
 		Initialize object and data structures for storing coverage and coverage over time, if specified.
 		:param sam_path: STR, path to input SAM file
 		:param capture_ref_len: BOOL, store reference genome lengths from SAM headers
+		:param aln_scores: BOOL, return alignment scores if present
 		"""
+		self.aln_regex = None
+		if aln_scores:
+			self.aln_regex = re.compile(r'AS:i:([0-9]+)\t')
 		self.sam_path = sam_path
 		self.ref_len = {}
 		self.output_handle = None
@@ -38,7 +45,7 @@ class SamParser(object):
 		"""
 		Iterator for SAM file handle, yields aligned read entries. The start_idx yielded from the SAM file is
 		one-indexed and must have 1 subtracted from it to translate it into zero-indexing.
-		:yield: (query, query_reverse_bool, target, target_start_idx, CIGAR)
+		:yield: (query, query_reverse_bool, target, target_start_idx, CIGAR, aln_score)
 		"""
 		if not self.line:
 			self._close()
@@ -60,8 +67,12 @@ class SamParser(object):
 			reverse = True
 		else:
 			reverse = False
+		if self.aln_regex:
+			aln_score = int(self.aln_regex.search(self.line).group(1))
+		else:
+			aln_score = None
 		self.line = self.handle.readline()
-		return query_header, reverse, target_header, target_start, cigar
+		return query_header, reverse, target_header, target_start, cigar, aln_score
 
 	def _open(self):
 		self.handle = open(self.sam_path, 'r')
@@ -152,5 +163,5 @@ def score_cigar(s, t_idx, match=1, mismatch=-1, indel_start=-2, indel_extend=-1)
 				score += insert_cost
 			num = ''
 		c_idx += 1
-	assert((t_idx - start_idx) == len(idx_scores))
+	assert ((t_idx - start_idx) == len(idx_scores))
 	return score, idx_scores, match_idxs, mismatch_idxs, insert_idxs, delete_idxs

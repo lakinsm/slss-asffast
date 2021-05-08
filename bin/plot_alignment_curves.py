@@ -72,7 +72,7 @@ def parse_seqfile(infile, sam_dict):
 def parse_sam(infile):
 	ret = {}
 	sam_parser = SamParser(infile)
-	for header, _, thead, tstart, cigar in sam_parser:
+	for header, _, thead, tstart, cigar, _ in sam_parser:
 		if header not in ret:
 			# sequencing sectime, target_list, start_idx_list, cigar_list
 			ret[header] = [None, (thead,), (tstart,), (cigar,)]
