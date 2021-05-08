@@ -111,11 +111,10 @@ def parse_cigar(s, t_idx):
 	return ret
 
 
-def score_cigar(s, t_idx, match=2, mismatch=-1, indel_start=-2, indel_extend=-1):
+def score_cigar(s, t_idx, match=2, mismatch=-4, indel_start=-2, indel_extend=-1):
 	"""
 	Parse SAM CIGAR alignment string and return reference indices for matches, mismatches, insertions, and deletions.
-	All indices are zero-indexed.  The score is calculated with respect to each position in the reference genome,
-	using +1 for match, -1 for mismatch, -2 for indel start, and -1 for indel extension (affine gap penalty).
+	All indices are zero-indexed.  The score is calculated with respect to each position in the reference genome.
 	The overall read-wise score is the sum of the first tuple.  This score should roughly correlate with alignment
 	scores from seed-and-extend aligners.
 	:param s: STR, CIGAR string
