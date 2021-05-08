@@ -152,6 +152,5 @@ def score_cigar(s, t_idx, match=1, mismatch=-1, indel_start=-2, indel_extend=-1)
 				score += insert_cost
 			num = ''
 		c_idx += 1
-	print((t_idx - start_idx), len(idx_scores))
 	assert((t_idx - start_idx) == len(idx_scores))
 	return score, idx_scores, match_idxs, mismatch_idxs, insert_idxs, delete_idxs
