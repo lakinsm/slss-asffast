@@ -11,7 +11,7 @@ class SamParser(object):
 	to exclude).  Aligning reads, if output, are output as they are parsed.
 	"""
 
-	def __init__(self, sam_path, capture_ref_len=True, aln_scores=False):
+	def __init__(self, sam_path, capture_ref_len=True, aln_scores=True):
 		"""
 		Initialize object and data structures for storing coverage and coverage over time, if specified.
 		:param sam_path: STR, path to input SAM file
@@ -111,7 +111,7 @@ def parse_cigar(s, t_idx):
 	return ret
 
 
-def score_cigar(s, t_idx, match=1, mismatch=-1, indel_start=-2, indel_extend=-1):
+def score_cigar(s, t_idx, match=2, mismatch=-1, indel_start=-2, indel_extend=-1):
 	"""
 	Parse SAM CIGAR alignment string and return reference indices for matches, mismatches, insertions, and deletions.
 	All indices are zero-indexed.  The score is calculated with respect to each position in the reference genome,
