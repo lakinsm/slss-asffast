@@ -65,6 +65,7 @@ if __name__ == '__main__':
 
 	# final entry
 	final_read = read_cache.finalize()
+	print(sam_parser.values())
 	insert_read_scores(sam_parser.values()[0], final_read, sam_parser.values()[3] - 1)
 
 	for k, v in target_info.items():
