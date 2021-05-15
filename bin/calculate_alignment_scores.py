@@ -68,7 +68,7 @@ if __name__ == '__main__':
 	insert_read_scores(target_info[sam_parser.values()[2]], final_read, sam_parser.values()[3] - 1)
 
 	for k, v in target_info.items():
-		sys.stdout.write('{}\t{} ({})\t{} ({})\t{} ({})\t{} ({})\t{} ({})'.format(
+		sys.stdout.write('{}\t{} ({})\t{} ({})\t{} ({})\t{} ({})\t{} ({})\n'.format(
 			k,
 			len(v[0]),
 			sum(v[0].values()),
