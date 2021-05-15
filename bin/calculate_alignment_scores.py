@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
 	# final entry
 	final_read = read_cache.finalize()
-	insert_read_scores(target_info[sam_parser.values()[0]], final_read, sam_parser.values()[3] - 1)
+	insert_read_scores(target_info[sam_parser.values()[2]], final_read, sam_parser.values()[3] - 1)
 
 	for k, v in target_info.items():
 		sys.stdout.write('{}\t{} ({})\t{} ({})\t{} ({})\t{} ({})\t{} ({})'.format(
