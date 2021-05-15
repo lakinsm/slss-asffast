@@ -1,6 +1,7 @@
 # Author: Steven Lakin
 
 import re
+import sys
 
 
 class SamParser(object):
@@ -25,6 +26,14 @@ class SamParser(object):
 		self.ref_len = {}
 		self.output_handle = None
 		self.handle = None
+
+		# Values
+		self.query_header = None
+		self.reverse = None
+		self.target_header = None
+		self.target_start = None
+		self.cigar = None
+		self.aln_score = None
 
 		# Read SAM header information to retrieve database headers and sequence lengths
 		self._open()
@@ -59,26 +68,63 @@ class SamParser(object):
 				raise StopIteration
 			entries = self.line.split('\t')
 			sam_flag = int(entries[1])
-		query_header = entries[0]
-		target_header = entries[2]
-		target_start = int(entries[3])
-		cigar = entries[5]
+		self.query_header = entries[0]
+		self.target_header = entries[2]
+		self.target_start = int(entries[3])
+		self.cigar = entries[5]
 		if sam_flag & 16 != 0:  # if reverse
-			reverse = True
+			self.reverse = True
 		else:
-			reverse = False
+			self.reverse = False
 		if self.aln_regex:
-			aln_score = int(self.aln_regex.search(self.line).group(1))
+			self.aln_score = int(self.aln_regex.search(self.line).group(1))
 		else:
-			aln_score = None
+			self.aln_score = None
 		self.line = self.handle.readline()
-		return query_header, reverse, target_header, target_start, cigar, aln_score
+		return self.values()
 
 	def _open(self):
 		self.handle = open(self.sam_path, 'r')
 
 	def _close(self):
 		self.handle.close()
+
+	def values(self):
+		return self.query_header, self.reverse, self.target_header, self.target_start, self.cigar, self.aln_score
+
+
+class ReadScoreCache(object):
+	"""
+
+	"""
+	def __init__(self):
+		self.cache = []
+		self.current_read = ''
+
+	def _put(self, read_score_obj):
+		self.cache.append(read_score_obj)
+
+	def _clear(self):
+		self.cache = []
+
+	def _top(self):
+		return sorted(self.cache)[-1]
+
+	def smart_insert(self, read_name, read_score_obj):
+		top_val = None
+		if not read_name:
+			sys.stderr.write('Error: read_name is undefined\n')
+			raise ValueError
+		if not self.current_read:
+			self.current_read = read_name
+		if read_name != self.current_read:
+			top_val = self._top()
+			self._clear()
+		self._put(read_score_obj)
+		return top_val
+
+	def finalize(self):
+		return self._top()
 
 
 def parse_cigar(s, t_idx):
