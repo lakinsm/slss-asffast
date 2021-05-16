@@ -51,10 +51,9 @@ def insert_read_scores(target_info_list, read_score_obj, zstart):
 
 def log_aln_scores(aln_scores):
 	log_aln_score = 0
-	for i in range(len(aln_scores[0])):
-		if i in aln_scores[0]:
-			aln_scores[0][i] = np.log(max(0, aln_scores[0][i]) + 1)
-			log_aln_score += aln_scores[0][i]
+	for k, v in aln_scores[0].items():
+		aln_scores[0][k] = np.log(max(0, v) + 1)
+		log_aln_score += aln_scores[0][k]
 	return [log_aln_score] + aln_scores
 
 
