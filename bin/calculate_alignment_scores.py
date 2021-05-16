@@ -55,7 +55,7 @@ def log_aln_scores(target_aln_scores):
 		for i in range(len(aln_scores[0])):
 			if i in aln_scores[0]:
 				aln_scores[0][i] = np.log(max(0, aln_scores[0][i]) + 1)
-			log_aln_score += aln_scores[0][1]
+				log_aln_score += aln_scores[0][i]
 		aln_scores = [log_aln_score] + aln_scores
 
 
