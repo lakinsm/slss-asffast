@@ -82,7 +82,7 @@ if __name__ == '__main__':
 	insert_read_scores(target_info[sam_parser.values()[2]], final_read, sam_parser.values()[3] - 1)
 
 	for target, data in target_info.items():
-		target_info[target] = log_aln_scores(target_info)
+		target_info[target] = log_aln_scores(data)
 
 	for k, v in target_info.items():
 		sys.stdout.write('{}\t{}\t{} ({})\t{} ({})\t{} ({})\t{} ({})\t{} ({})\n'.format(
