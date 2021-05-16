@@ -57,9 +57,25 @@ def log_aln_scores(aln_scores):
 	return [log_aln_score] + aln_scores
 
 
-def plot_alignment_scores(target_aln_scores, out_prefix, out_dir, top_n=10):
+def plot_alignment_scores(target_aln_scores, out_dir, out_prefix, top_n=10):
 	facet_colors = [plt.cm.Set1(i) for i in range(5)]
-	target_order = sorted([(sum(v[0]), k) for k, v in target_aln_scores.items() if sum(v[0]) > 0], reverse=True)
+	target_order = sorted([(sum(v[0]), k) for k, v in target_aln_scores.items() if sum(v[0]) > 0], reverse=True)[:top_n]
+
+	for target in target_order:
+		v = target_aln_scores[target]
+		sys.stdout.write('{}\t{}\t{}\t{} ({})\t{} ({})\t{} ({})\t{} ({})\n'.format(
+			target,
+			np.round(v[0]),
+			len(v[1]),
+			len(v[2]),
+			sum(v[2].values()),
+			len(v[3]),
+			sum(v[3].values()),
+			len(v[4]),
+			sum(v[4].values()),
+			len(v[5]),
+			sum(v[5].values()),
+		))
 
 
 if __name__ == '__main__':
@@ -83,18 +99,4 @@ if __name__ == '__main__':
 	for target, data in target_info.items():
 		target_info[target] = log_aln_scores(data)
 
-	for k, v in target_info.items():
-		sys.stdout.write('{}\t{}\t{} ({})\t{} ({})\t{} ({})\t{} ({})\t{} ({})\n'.format(
-			k,
-			np.round(v[0]),
-			len(v[1]),
-			np.round(sum(v[1].values())),
-			len(v[2]),
-			sum(v[2].values()),
-			len(v[3]),
-			sum(v[3].values()),
-			len(v[4]),
-			sum(v[4].values()),
-			len(v[5]),
-			sum(v[5].values()),
-		))
+	plot_alignment_scores(target_info, sys.argv[2], sys.argv[3])
