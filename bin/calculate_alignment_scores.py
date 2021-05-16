@@ -49,14 +49,13 @@ def insert_read_scores(target_info_list, read_score_obj, zstart):
 			target_info_list[4][i] = 1
 
 
-def log_aln_scores(target_aln_scores):
-	for target, aln_scores in target_aln_scores.items():
-		log_aln_score = 0
-		for i in range(len(aln_scores[0])):
-			if i in aln_scores[0]:
-				aln_scores[0][i] = np.log(max(0, aln_scores[0][i]) + 1)
-				log_aln_score += aln_scores[0][i]
-		aln_scores = [log_aln_score] + aln_scores
+def log_aln_scores(aln_scores):
+	log_aln_score = 0
+	for i in range(len(aln_scores[0])):
+		if i in aln_scores[0]:
+			aln_scores[0][i] = np.log(max(0, aln_scores[0][i]) + 1)
+			log_aln_score += aln_scores[0][i]
+	return [log_aln_score] + aln_scores
 
 
 def plot_alignment_scores(target_aln_scores, out_prefix, out_dir, top_n=10):
@@ -82,7 +81,8 @@ if __name__ == '__main__':
 	final_read = read_cache.finalize()
 	insert_read_scores(target_info[sam_parser.values()[2]], final_read, sam_parser.values()[3] - 1)
 
-	log_aln_scores(target_info)
+	for target, data in target_info.items():
+		target_info[target] = log_aln_scores(target_info)
 
 	for k, v in target_info.items():
 		sys.stdout.write('{}\t{}\t{} ({})\t{} ({})\t{} ({})\t{} ({})\t{} ({})\n'.format(
