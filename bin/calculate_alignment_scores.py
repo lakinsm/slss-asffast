@@ -59,8 +59,8 @@ def log_aln_scores(aln_scores):
 
 def plot_alignment_scores(target_aln_scores, out_dir, out_prefix, top_n=10):
 	facet_colors = [plt.cm.Set1(i) for i in range(5)]
-	target_order = sorted([x[1] for x in
-	                       [(v[0], k) for k, v in target_aln_scores.items() if v[0] > 0]], reverse=True)[:top_n]
+	target_order = [x[1] for x in
+	                sorted([(v[0], k) for k, v in target_aln_scores.items() if v[0] > 0], reverse=True)][:top_n]
 
 	for target in target_order:
 		v = target_aln_scores[target]
