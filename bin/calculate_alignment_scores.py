@@ -89,7 +89,7 @@ if __name__ == '__main__':
 			k,
 			np.round(v[0]),
 			len(v[1]),
-			sum(v[1].values()),
+			np.round(sum(v[1].values())),
 			len(v[2]),
 			sum(v[2].values()),
 			len(v[3]),
