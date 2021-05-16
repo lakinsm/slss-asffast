@@ -87,7 +87,7 @@ if __name__ == '__main__':
 	for k, v in target_info.items():
 		sys.stdout.write('{}\t{}\t{} ({})\t{} ({})\t{} ({})\t{} ({})\t{} ({})\n'.format(
 			k,
-			v[0],
+			np.round(v[0]),
 			len(v[1]),
 			sum(v[1].values()),
 			len(v[2]),
