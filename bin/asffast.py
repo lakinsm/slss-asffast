@@ -251,7 +251,7 @@ if __name__ == '__main__':
 	sys.stdout.write('\n')
 	while (watch_timer < args.wait) and not cancel_flag:
 		this_file_counter = 0
-		fastqs = glob.iglob(args.input + '/**/fastq_pass/**.fastq', recursive=True)
+		fastqs = glob.iglob(args.input + '/**/fastq_pass/**/*.fastq', recursive=True)
 		if not fastqs:
 			sys.stderr.write('\nNo folder \"fastq_pass\" or .fastq files detected in subdirectories of {}\n'.format(
 				args.input
