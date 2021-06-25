@@ -275,9 +275,6 @@ if __name__ == '__main__':
 					globstar_input_path = get_real_dir(f) + '/*.fastq'
 			this_file_counter += 1
 
-		print(samples)
-		print(globstar_input_path)
-
 		# Determine if Nextflow needs to be run, else start timer
 		if this_file_counter > files_present:
 			sys.stdout.write('{} new files found, Nextflow run triggered...\n\n'.format(

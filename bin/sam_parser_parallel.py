@@ -240,7 +240,7 @@ def final_worker(infile):
 	barcode_id = infile.split('/')[-1].split('_')[0]
 	sample_id = infile.split('/')[-1].replace(barcode_id + '_', '').replace('.sam', '')
 	timepoint = infile.split('/')[-1].replace('.sam', '').split('_')[-1]
-	sam_parser = SamParser(infile, output_reads='{}_{}_aligned_reads.fasta'.format(timepoint, barcode_id))
+	sam_parser = SamParser(infile)
 	for query, _, target, t_start, cigar in sam_parser:
 		idxs = parse_cigar(cigar, t_start - 1)
 		if target not in ref_cov:

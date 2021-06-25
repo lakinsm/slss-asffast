@@ -66,19 +66,19 @@ process PlotMinknowMetadata {
 }
 
 
-process BwaIndexReference {
+process MinimapIndexReference {
 	input:
-		path db_dir from reference_db
+		path db_fpath from reference_db
 	output:
-		file '*' into (asfv_reference)
+		file 'slss_asffast2_reference.mmi' into (asfv_reference)
 
 	"""
-	bwa index $db_dir
+	minimap2 -x map-ont -d slss_asffast2_reference.mmi $db_fpath
 	"""
 }
 
 
-process BwaAlignNoBarcodes {
+process MinimapAlignNoBarcodes {
     tag {file_id}
 
     input:
@@ -94,12 +94,12 @@ process BwaAlignNoBarcodes {
 	script:
 		def barcode_match = "barcode00"
     """
-	bwa mem -t $threads -R "@RG\\tID:${barcode_match}\\tSM:${barcode_match}" $reference_db $reads > ${barcode_match}_${file_id}.sam
+	minimap2 -N 1000 -a --eqx -x map-ont -t $threads -R "@RG\\tID:${barcode_match}\\tSM:${barcode_match}" $index $reads > ${barcode_match}_${file_id}.sam
     """
 }
 
 
-process BwaAlignWithBarcodes {
+process MinimapAlignWithBarcodes {
     tag {file_id}
 
     input:
@@ -115,7 +115,7 @@ process BwaAlignWithBarcodes {
     script:
         def barcode_match = getBarcode(full_name).findAll().first()[1]
     """
-	bwa mem -t $threads -R "@RG\\tID:${barcode_match}\\tSM:${barcode_match}" $reference_db $reads > ${barcode_match}_${file_id}.sam
+	minimap2 -N 1000 -a --eqx -x map-ont -t $threads -R "@RG\\tID:${barcode_match}\\tSM:${barcode_match}" $index $reads > ${barcode_match}_${file_id}.sam
     """
 }
 
@@ -146,7 +146,6 @@ process CoverageAnalysisFinal {
 	output:
 		file("coverage_results.csv") into (cov_res)
 		file("*coverage_plots.pdf")
-		file("*aligned_reads.fasta")
 
 	when:
 		final_flag

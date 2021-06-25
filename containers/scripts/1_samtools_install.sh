@@ -56,8 +56,8 @@ cd bcftools-1.9 || exit
 make
 cd ../
 
-git clone https://github.com/lh3/bwa.git
-cd bwa || exit
+git clone https://github.com/lh3/minimap2.git
+cd minimap2 || exit
 make
 cd ../
 
@@ -69,7 +69,7 @@ mv htslib-1.9 htslib
 mv samtools-1.9 samtools
 cp bcftools/misc/vcfutils.pl /opt/biotools/
 cd /usr/bin
-ln -s /opt/biotools/bwa/bwa
+ln -s /opt/biotools/minimap2/minimap2
 ln -s /opt/biotools/bcftools/bcftools
 ln -s /opt/biotools/vcfutils.pl
 ln -s /opt/biotools/samtools/samtools
