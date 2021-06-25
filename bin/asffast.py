@@ -15,7 +15,7 @@ from datetime import datetime
 SINGULARITY_LIB_PATH = 'library://lakinsm/default/slss-asffast:alpha1'
 SLURM_CONFIG = 'slss_hpc_slurm.config'
 NEXTFLOW_MAX_FORKS = 16  # Maximum file parallelism to execute (should match maxForks in nextflow.config)
-BARCODE_REGEX = re.compile(r'/([Bb]arcodes?[0-9]{1,2})/')  # Regular expression to detect if barcode dirs are present
+BARCODE_REGEX = re.compile(r'/([Bb]arcodes?[0-9]{1,2}[a-z]?)/')  # Regular expression to detect if barcode dirs are present
 BAR_LENGTH = 35
 TERMINAL_LENGTH = 80
 
@@ -251,7 +251,7 @@ if __name__ == '__main__':
 	sys.stdout.write('\n')
 	while (watch_timer < args.wait) and not cancel_flag:
 		this_file_counter = 0
-		fastqs = glob.iglob(args.input + '/**/fastq_pass/*.fastq', recursive=True)
+		fastqs = glob.iglob(args.input + '/**/fastq_pass/**.fastq', recursive=True)
 		if not fastqs:
 			sys.stderr.write('\nNo folder \"fastq_pass\" or .fastq files detected in subdirectories of {}\n'.format(
 				args.input
