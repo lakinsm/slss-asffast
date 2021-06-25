@@ -15,7 +15,7 @@ from datetime import datetime
 SINGULARITY_LIB_PATH = 'library://lakinsm/default/slss-asffast:alpha1'
 SLURM_CONFIG = 'slss_hpc_slurm.config'
 NEXTFLOW_MAX_FORKS = 16  # Maximum file parallelism to execute (should match maxForks in nextflow.config)
-BARCODE_REGEX = re.compile(r'/([Bb]arcodes?[0-9]{1,2}[a-z]?)/')  # Regular expression to detect if barcode dirs are present
+BARCODE_REGEX = re.compile(r'/(barcode[0-9]{1,2}[a-z]?)/')  # Regular expression to detect if barcode dirs are present
 BAR_LENGTH = 35
 TERMINAL_LENGTH = 80
 
@@ -265,7 +265,7 @@ if __name__ == '__main__':
 				barcode_flag = True
 				samples.add((samplename, barcode.group(1)))
 				if not globstar_input_path:
-					globstar_input_path = get_real_dir(f).replace(barcode.group(1), '*') + '/*.fastq'
+					globstar_input_path = get_real_dir(f).replace(barcode.group(1), 'barcode*') + '/*.fastq'
 			else:
 				parent_fastq_dir = f.split('/')[-2]
 				if parent_fastq_dir == 'unclassified':

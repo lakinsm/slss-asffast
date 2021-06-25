@@ -236,7 +236,7 @@ process ProduceConsensus {
 
 
 def getBarcode(def filename) {
-	def pattern = ~/(barcodes?[0-9]{1,2}[a-z]?)/
+	def pattern = ~/(barcode[0-9]{1,2}[a-z]?)/
 	return filename =~ pattern
 }
 
