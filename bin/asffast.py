@@ -259,8 +259,7 @@ if __name__ == '__main__':
 			raise ValueError
 		for f in fastqs:
 			# Handles unclassified reads from barcoded runs
-			parent_fastq_dir = f.split('/')[-2]
-			if parent_fastq_dir == 'unclassified':
+			if '_unclassified_' in f.split('/')[-1]:
 				continue
 			samplename = '_'.join(f.split('/')[-1].split('.')[0].split('_')[:-1])
 			barcode = BARCODE_REGEX.search(f)
