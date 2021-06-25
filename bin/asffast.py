@@ -259,12 +259,12 @@ if __name__ == '__main__':
 			raise ValueError
 		for f in fastqs:
 			# Handles unclassified reads from barcoded runs
-			if '_unclassified_' in f.split('/')[-1]:
-				continue
 			samplename = '_'.join(f.split('/')[-1].split('.')[0].split('_')[:-1])
 			barcode = BARCODE_REGEX.search(f)
 			if barcode:
 				barcode_flag = True
+				if barcode.group(1) == 'unclassified':
+					continue
 				samples.add((samplename, barcode.group(1)))
 				if not globstar_input_path:
 					globstar_input_path = get_real_dir(f).replace(barcode.group(1), '*') + '/*.fastq'
@@ -273,6 +273,9 @@ if __name__ == '__main__':
 				if not globstar_input_path:
 					globstar_input_path = get_real_dir(f) + '/*.fastq'
 			this_file_counter += 1
+
+		print(samples)
+		print(globstar_input_path)
 
 		# Determine if Nextflow needs to be run, else start timer
 		if this_file_counter > files_present:
