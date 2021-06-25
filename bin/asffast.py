@@ -263,12 +263,13 @@ if __name__ == '__main__':
 			barcode = BARCODE_REGEX.search(f)
 			if barcode:
 				barcode_flag = True
-				if barcode.group(1) == 'unclassified':
-					continue
 				samples.add((samplename, barcode.group(1)))
 				if not globstar_input_path:
 					globstar_input_path = get_real_dir(f).replace(barcode.group(1), '*') + '/*.fastq'
 			else:
+				parent_fastq_dir = f.split('/')[-2]
+				if parent_fastq_dir == 'unclassified':
+					continue
 				samples.add((samplename,))
 				if not globstar_input_path:
 					globstar_input_path = get_real_dir(f) + '/*.fastq'
