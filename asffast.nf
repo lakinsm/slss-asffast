@@ -168,6 +168,8 @@ process CoverageAnalysisFinal {
 
 
 process MergeAlignedSamFiles {
+	publishDir "${params.output}/AlignmentFiles", mode: "copy"
+
 	input:
 		val(file_list) from final_data1.mix(final_data2).toList()
 	output:
