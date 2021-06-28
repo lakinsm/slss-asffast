@@ -117,7 +117,7 @@ class ReadScoreCache(object):
 	def _top(self):
 		finals = {}
 		for target, read_cache in self.cache.items():
-			finals[target] = sorted(read_cache)[-1]
+			finals[target] = sorted(read_cache)[-1][-1]
 		return True, finals
 
 	def smart_insert(self, read_name, target_name, read_score_obj, read_idxs):
