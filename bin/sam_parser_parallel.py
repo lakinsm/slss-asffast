@@ -361,17 +361,16 @@ if __name__ == '__main__':
 		# Combine results
 		for barcode, sample, cov_dict in res:
 			if barcode not in barcode_to_ref_cov:
-				barcode_to_ref_cov[barcode] = cov_dict
 				barcode_to_sample_id[barcode] = sample.split('_')[0]
-			else:
-				for target, idx_ranges in cov_dict.items():
-					for idx_range in idx_ranges:
-						idxs = range(idx_range[0], idx_range[1] + 1)
-						if target in barcode_to_ref_cov[barcode]:
-							for idx in idxs:
-								barcode_to_ref_cov[barcode][target].add(idx)
-						else:
-							barcode_to_ref_cov[barcode][target] = set(idxs)
+				barcode_to_ref_cov[barcode] = {}
+			for target, idx_ranges in cov_dict.items():
+				for idx_range in idx_ranges:
+					idxs = range(idx_range[0], idx_range[1] + 1)
+					if target in barcode_to_ref_cov[barcode]:
+						for idx in idxs:
+							barcode_to_ref_cov[barcode][target].add(idx)
+					else:
+						barcode_to_ref_cov[barcode][target] = set(idxs)
 
 		write_coverage(barcode_to_ref_cov, this_sam_parser.ref_len, barcode_to_sample_id, args.output_cov)
 	else:
