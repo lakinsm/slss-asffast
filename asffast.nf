@@ -7,7 +7,7 @@ if( params.help ) {
 reference_db = file(params.db)
 threads = params.threads
 forks = params.forks
-final_info = params.final
+final_info = params.final_info
 out_prefix = params.out_prefix
 
 
