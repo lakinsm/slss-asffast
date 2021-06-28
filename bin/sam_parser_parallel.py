@@ -311,11 +311,11 @@ def parse_final_observed_file(infile):
 	ret = {}
 	with open(infile, 'r') as f:
 		data = f.read().split('\n')
-		for line in data:
-			if not line:
-				continue
-			barcode, genome = line.split('\t')
-			ret[barcode] = genome
+	for line in data:
+		if not line:
+			continue
+		entries = line.split()
+		ret[entries[0]] = entries[1]
 	return ret
 
 
