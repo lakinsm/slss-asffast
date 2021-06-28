@@ -235,10 +235,10 @@ def worker(infile):
 				if i == (start + run):
 					run += 1
 				else:
-					ret[k] += (start, start + run)
+					ret[k].append((start, start + run))
 					start = i
 					run = 0
-			ret[k] += (start, start + run)
+			ret[k].append((start, start + run))
 		return ret
 
 	ref_cov = {}
