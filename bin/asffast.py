@@ -351,7 +351,7 @@ if __name__ == '__main__':
 	# Write best observed genomes for each barcode to file
 	obs_genome_filepath = nextflow_work_dir + '/observed_best_genomes.txt'
 	with open(obs_genome_filepath, 'w') as obs:
-		for barcode, genome in observed_best_genomes:
+		for barcode, genome in observed_best_genomes.items():
 			obs.write('{}\t{}\n'.format(barcode, genome))
 
 	# Find metadata files if they exist and optionally include in the final run
