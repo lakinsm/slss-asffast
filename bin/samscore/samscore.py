@@ -235,4 +235,4 @@ if __name__ == '__main__':
 
 	_, final_idx_dict = read_cache.finalize()
 	for target, final_idxs in final_idx_dict.items():
-		sys.stdout.write('{}\t{}\n'.format(target, len(final_idxs)))
+		sys.stdout.write('{}\t{}\n'.format(target, final_idxs))
