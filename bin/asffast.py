@@ -425,8 +425,6 @@ if __name__ == '__main__':
 		nextflow_arglist += ['--throughput', globstar_througput_path, '--sequencing', globstar_sequencing_path]
 	if args.prefix:
 		nextflow_arglist += ['--out_prefix', args.prefix]
-	print(nextflow_arglist)
-	sys.exit()
 	p = subprocess.Popen([str(x) for x in nextflow_arglist])
 	exit_code = p.wait()
 	sys.stdout.write('\n')
