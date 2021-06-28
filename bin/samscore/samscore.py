@@ -215,4 +215,4 @@ def score_cigar(s, t_idx, match=2, mismatch=-4, indel_start=-2, indel_extend=-1)
 if __name__ == '__main__':
 	sam_parser = SamParser(sys.argv[1])
 	for header, rev, thead, tstart, cigar, aln_score in sam_parser:
-		print('\t'.join([header, rev, thead, tstart, cigar, aln_score]))
+		sys.stdout.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(header, rev, thead, tstart, cigar, aln_score))
