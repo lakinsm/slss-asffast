@@ -418,9 +418,9 @@ if __name__ == '__main__':
 		nextflow_arglist += ['-with-singularity', SINGULARITY_LIB_PATH]
 	if args.slurm:
 		if barcode_flag:
-			nextflow_arglist[13] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
+			nextflow_arglist[14] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 		else:
-			nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
+			nextflow_arglist[13] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 	if globstar_sequencing_path and globstar_througput_path:
 		nextflow_arglist += ['--throughput', globstar_througput_path, '--sequencing', globstar_sequencing_path]
 	if args.prefix:
