@@ -225,6 +225,22 @@ def write_coverage(cov_dict, ref_len_dict, barcode_to_sample_dict, output_csv_pa
 
 
 def worker(infile):
+	def convert_to_ranges(ref_dict):
+		ret = {}
+		for k, v in ref_dict.items():
+			ret[k] = []
+			start = 0
+			run = 0
+			for i in sorted(v):
+				if i == (start + run):
+					run += 1
+				else:
+					ret[k] += (start, start + run)
+					start = i
+					run = 0
+			ret[k] += (start, start + run)
+		return ret
+
 	ref_cov = {}
 	read_cache = ReadScoreCache()
 	barcode_id = infile.split('/')[-1].split('_')[0]
@@ -250,6 +266,8 @@ def worker(infile):
 			ref_cov[target] = set()
 		for idx in top_idxs:
 			ref_cov[target].add(idx)
+
+	ref_cov = convert_to_ranges(ref_cov)
 	return barcode_id, sample_id, ref_cov
 
 
@@ -346,12 +364,14 @@ if __name__ == '__main__':
 				barcode_to_ref_cov[barcode] = cov_dict
 				barcode_to_sample_id[barcode] = sample.split('_')[0]
 			else:
-				for target, idxs in cov_dict.items():
-					if target in barcode_to_ref_cov[barcode]:
-						for idx in idxs:
-							barcode_to_ref_cov[barcode][target].add(idx)
-					else:
-						barcode_to_ref_cov[barcode][target] = idxs
+				for target, idx_ranges in cov_dict.items():
+					for idx_range in idx_ranges:
+						idxs = range(idx_range[0], idx_range[1] + 1)
+						if target in barcode_to_ref_cov[barcode]:
+							for idx in idxs:
+								barcode_to_ref_cov[barcode][target].add(idx)
+						else:
+							barcode_to_ref_cov[barcode][target] = set(idxs)
 
 		write_coverage(barcode_to_ref_cov, this_sam_parser.ref_len, barcode_to_sample_id, args.output_cov)
 	else:
