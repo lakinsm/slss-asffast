@@ -130,6 +130,7 @@ class ReadScoreCache(object):
 		if read_name != self.current_read:
 			top_val = self._top()
 			self._clear()
+			self.current_read = read_name
 		self._put(target_name, read_score_obj, read_idxs)
 		return top_val
 
