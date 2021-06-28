@@ -10,7 +10,7 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import multiprocessing as mp
-from functools import partial
+from itertools import repeat
 from samscore.samscore import SamParser
 from samscore.samscore import parse_cigar
 from samscore.samscore import ReadScoreCache
@@ -357,8 +357,7 @@ if __name__ == '__main__':
 	else:
 		best_genomes = parse_final_observed_file(args.final)
 		pool = mp.Pool(processes=args.threads)
-		final_worker_target = partial(final_worker, select=best_genomes)
-		res = pool.map(final_worker_target, sam_file_list)
+		res = pool.starmap(final_worker, zip(sam_file_list, repeat(best_genomes)))
 		pool.close()
 		pool.join()
 		pool.terminate()
