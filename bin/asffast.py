@@ -156,6 +156,7 @@ def get_create_real_dir(inpath):
 
 
 def report_intermediate_coverage(infile, n=3):
+	intermediate_best_genomes = {}
 	end_col = '\u001b[0m'
 	sys.stdout.write('\n{:%Y-%m-%d %H:%M:%S} Coverage Results for Top {} Genomes Per Barcode:\n\n'.format(
 		datetime.now(),
@@ -174,6 +175,7 @@ def report_intermediate_coverage(infile, n=3):
 
 	ordered_keys = sorted(data_dict.keys())
 	for barcode in ordered_keys:
+		intermediate_best_genomes[barcode] = data_dict[barcode][0]
 		sys.stdout.write('{}: {}\n'.format(
 			barcode,
 			data_dict[barcode][0]
@@ -203,6 +205,7 @@ def report_intermediate_coverage(infile, n=3):
 				percent_cov
 			))
 		sys.stdout.write('\n')
+	return intermediate_best_genomes
 
 
 parser = argparse.ArgumentParser('asffast.py')
@@ -246,6 +249,7 @@ if __name__ == '__main__':
 	watch_timer = 0
 	cancel_flag = False  # Flag to cancel the run prematurely
 	barcode_flag = False  # Flag indicating that barcodes are present in the run
+	observed_best_genomes = None
 
 	# Calculate input structure, find barcode ids
 	sys.stdout.write('\n')
@@ -329,7 +333,7 @@ if __name__ == '__main__':
 			sys.stdout.write('\n')
 			sys.stdout.flush()
 
-			report_intermediate_coverage(args.output + '/CoverageAnalysis/coverage_results.csv')
+			observed_best_genomes = report_intermediate_coverage(args.output + '/CoverageAnalysis/coverage_results.csv')
 
 			files_present = this_file_counter
 			watch_timer = 0
@@ -342,6 +346,12 @@ if __name__ == '__main__':
 
 	# Start final Nextflow run with genomic subset of reference
 	sys.stdout.write('Beginning final Nextflow run...\n\n')
+
+	# Write best observed genomes for each barcode to file
+	obs_genome_filepath = nextflow_work_dir + '/observed_best_genomes.txt'
+	with open(obs_genome_filepath, 'w') as obs:
+		for barcode, genome in observed_best_genomes:
+			obs.write('{}\t{}\n'.format(barcode, genome))
 
 	# Find metadata files if they exist and optionally include in the final run
 	fq_pass = list(glob.iglob(args.input + '/**/fastq_pass', recursive=True))
@@ -374,7 +384,8 @@ if __name__ == '__main__':
 			'--threads',
 			threads,
 			'--barcodes',
-			'--final_flag',
+			'--final',
+			obs_genome_filepath,
 			'-w',
 			nextflow_work_dir,
 			'-config',
@@ -392,7 +403,7 @@ if __name__ == '__main__':
 			threads,
 			'--db',
 			os.path.realpath(args.reference),
-			'--final_flag',
+			'--final',
 			'-w',
 			nextflow_work_dir,
 			'-config',

@@ -102,20 +102,26 @@ class ReadScoreCache(object):
 
 	"""
 	def __init__(self):
-		self.cache = []
+		self.cache = {}
 		self.current_read = ''
 
-	def _put(self, read_score_obj):
-		self.cache.append(read_score_obj)
+	def _put(self, target_name, read_score_obj, idxs):
+		if target_name not in self.cache:
+			self.cache[target_name] = [(read_score_obj, idxs)]
+		else:
+			self.cache[target_name].append((read_score_obj, idxs))
 
 	def _clear(self):
-		self.cache = []
+		self.cache = {}
 
 	def _top(self):
-		return sorted(self.cache)[-1]
+		finals = {}
+		for target, read_cache in self.cache.items():
+			finals[target] = sorted(read_cache)[-1]
+		return True, finals
 
-	def smart_insert(self, read_name, read_score_obj):
-		top_val = None
+	def smart_insert(self, read_name, target_name, read_score_obj, read_idxs):
+		top_val = (None, None)
 		if not read_name:
 			sys.stderr.write('Error: read_name is undefined\n')
 			raise ValueError
@@ -124,7 +130,7 @@ class ReadScoreCache(object):
 		if read_name != self.current_read:
 			top_val = self._top()
 			self._clear()
-		self._put(read_score_obj)
+		self._put(target_name, read_score_obj, read_idxs)
 		return top_val
 
 	def finalize(self):

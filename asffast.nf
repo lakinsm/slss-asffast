@@ -7,7 +7,7 @@ if( params.help ) {
 reference_db = file(params.db)
 threads = params.threads
 forks = params.forks
-final_flag = params.final_flag
+final = params.final
 out_prefix = params.out_prefix
 
 
@@ -48,7 +48,7 @@ process PlotMinknowMetadata {
 		file("throughput_timeseries_graph.pdf")
 
 	when:
-		final_flag
+		final != 'NONE_F'
 
 	script:
 		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
@@ -129,7 +129,7 @@ process CoverageAnalysisIntermediate {
 		file("coverage_results.csv")
 
 	when:
-		!final_flag
+		final == 'NONE_F'
 
 	"""
 	echo "$file_list" > list_of_inputs.txt
@@ -148,7 +148,7 @@ process CoverageAnalysisFinal {
 		file("*coverage_plots.pdf")
 
 	when:
-		final_flag
+		final != 'NONE_F'
 
 	"""
 	echo "$file_list" > list_of_inputs.txt
@@ -175,7 +175,7 @@ process MergeAlignedSamFiles {
 		file("*aligned_reads.sam") into (consensus_sam, alignment_curves)
 
 	when:
-		final_flag
+		final != 'NONE_F'
 
 	"""
 	echo "$file_list" > list_of_inputs.txt
@@ -195,7 +195,7 @@ process PlotAlignmentCurves {
 		file("*alignment_timeseries_data.csv")
 
 	when:
-		final_flag
+		final != 'NONE_F'
 
 	script:
 		if( seqfile.name != 'NONE_S' )
@@ -220,7 +220,7 @@ process ProduceConsensus {
 		file("*_consensus.fasta")
 
 	when:
-		final_flag
+		final != 'NONE_F'
 
 	script:
 		def this_barcode = getBarcode(sam.name).findAll().first()[1]
@@ -260,7 +260,7 @@ def help() {
     println "Algorithm options:"
     println ""
     println "    --threads       INT      number of process threads, default 1 (max thread use = maxForks * threads)"
-    println "    --final_flag    FLAG     indicate that this is the final run"
+    println "    --final         STR      if specified, do final analysis, value is .tsv with best genome for each barcode"
     println ""
     println "Help options:"
     println ""

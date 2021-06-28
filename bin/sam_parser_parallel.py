@@ -10,8 +10,11 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import multiprocessing as mp
+from functools import partial
 from samscore.samscore import SamParser
 from samscore.samscore import parse_cigar
+from samscore.samscore import ReadScoreCache
+from samscore.samscore import score_cigar
 
 
 def find_top_targets(cov_dict, n=5):
@@ -223,34 +226,66 @@ def write_coverage(cov_dict, ref_len_dict, barcode_to_sample_dict, output_csv_pa
 
 def worker(infile):
 	ref_cov = {}
+	read_cache = ReadScoreCache()
 	barcode_id = infile.split('/')[-1].split('_')[0]
 	sample_id = infile.split('/')[-1].replace(barcode_id + '_', '').replace('.sam', '')
 	sam_parser = SamParser(infile)
 	# query_header, reverse, target_header, target_start, cigar, aln_score
-	for query, _, target, t_start, cigar, _ in sam_parser:
-		idxs = parse_cigar(cigar, t_start - 1)
+	for qheader, _, target, tstart, cigar, _ in sam_parser:
+		# read_score = tuple(score, [idx_scores], (match_idxs,), (mismatch_idxs,), (insert_idxs,), (delete_idxs,))
+		read_score = score_cigar(cigar, tstart - 1)
+		idxs = parse_cigar(cigar, tstart - 1)
+		top_read, top_idx_dict = read_cache.smart_insert(qheader, target, read_score, idxs)
+		if top_read:
+			for target, top_idxs in top_idx_dict.items():
+				if target not in ref_cov:
+					ref_cov[target] = set()
+				for idx in top_idxs:
+					ref_cov[target].add(idx)
+
+	# final entry
+	_, final_idxs = read_cache.finalize()
+	for target, top_idxs in final_idxs.items():
 		if target not in ref_cov:
 			ref_cov[target] = set()
-		for idx in idxs:
+		for idx in top_idxs:
 			ref_cov[target].add(idx)
 	return barcode_id, sample_id, ref_cov
 
 
-def final_worker(infile):
+def final_worker(infile, select=None):
 	ref_cov = {}
+	read_cache = ReadScoreCache()
 	barcode_id = infile.split('/')[-1].split('_')[0]
 	sample_id = infile.split('/')[-1].replace(barcode_id + '_', '').replace('.sam', '')
 	timepoint = infile.split('/')[-1].replace('.sam', '').split('_')[-1]
 	sam_parser = SamParser(infile)
-	for query, _, target, t_start, cigar, _ in sam_parser:
-		idxs = parse_cigar(cigar, t_start - 1)
+	for query, _, target, tstart, cigar, _ in sam_parser:
+		if select and (select != target):
+			continue
+		read_score = score_cigar(cigar, tstart - 1)
+		idxs = parse_cigar(cigar, tstart - 1)
+		top_read, top_idx_dict = read_cache.smart_insert(query, target, read_score, idxs)
+		if top_read:
+			for target, top_idxs in top_idx_dict.items():
+				if target not in ref_cov:
+					ref_cov[target] = {}
+				for idx in top_idxs:
+					if idx in ref_cov[target]:
+						ref_cov[target][idx] += 1
+					else:
+						ref_cov[target][idx] = 1
+
+	# final entry
+	_, final_idxs = read_cache.finalize()
+	for target, top_idxs in final_idxs.items():
 		if target not in ref_cov:
 			ref_cov[target] = {}
-		for i in idxs:
-			if i in ref_cov[target]:
-				ref_cov[target][i] += 1
+		for idx in top_idxs:
+			if idx in ref_cov[target]:
+				ref_cov[target][idx] += 1
 			else:
-				ref_cov[target][i] = 1
+				ref_cov[target][idx] = 1
 	return barcode_id, sample_id, int(timepoint), ref_cov
 
 
@@ -265,8 +300,8 @@ parser.add_argument('-op', '--output_pdf', type=str, default=None, help='Filepat
 parser.add_argument('-ot', '--output_time', type=str, default=None,
                     help='Filepath for time series .csv output file, overrides/exclusive with -oc and -op')
 parser.add_argument('-tmax', '--time_max', type=int, default=400, help='Maximum time point to analyze for time series')
-parser.add_argument('--final', action='store_true', default=False,
-                    help='Final run (not an intermediate): output all data as opposed to minimal')
+parser.add_argument('--final', type=str, default=None,
+                    help='Final run (not an intermediate): output all data for the specified reference target')
 parser.add_argument('--threads', type=int, default=1, help='Number of threads to utilize in parallel')
 
 if __name__ == '__main__':
@@ -310,7 +345,8 @@ if __name__ == '__main__':
 	else:
 
 		pool = mp.Pool(processes=args.threads)
-		res = pool.map(final_worker, sam_file_list)
+		final_worker_target = partial(final_worker, select=args.final)
+		res = pool.map(final_worker_target, sam_file_list)
 		pool.close()
 		pool.join()
 		pool.terminate()
