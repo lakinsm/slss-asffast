@@ -226,6 +226,7 @@ def worker(infile):
 	barcode_id = infile.split('/')[-1].split('_')[0]
 	sample_id = infile.split('/')[-1].replace(barcode_id + '_', '').replace('.sam', '')
 	sam_parser = SamParser(infile)
+	# query_header, reverse, target_header, target_start, cigar, aln_score
 	for query, _, target, t_start, cigar, _ in sam_parser:
 		idxs = parse_cigar(cigar, t_start - 1)
 		if target not in ref_cov:
@@ -241,7 +242,7 @@ def final_worker(infile):
 	sample_id = infile.split('/')[-1].replace(barcode_id + '_', '').replace('.sam', '')
 	timepoint = infile.split('/')[-1].replace('.sam', '').split('_')[-1]
 	sam_parser = SamParser(infile)
-	for query, _, target, t_start, cigar in sam_parser:
+	for query, _, target, t_start, cigar, _ in sam_parser:
 		idxs = parse_cigar(cigar, t_start - 1)
 		if target not in ref_cov:
 			ref_cov[target] = {}
