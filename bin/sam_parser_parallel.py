@@ -261,7 +261,7 @@ def final_worker(infile, select=None):
 	timepoint = infile.split('/')[-1].replace('.sam', '').split('_')[-1]
 	sam_parser = SamParser(infile)
 	for query, _, target, tstart, cigar, _ in sam_parser:
-		if select and (select != target):
+		if select and (select[barcode_id] != target):
 			continue
 		read_score = score_cigar(cigar, tstart - 1)
 		idxs = parse_cigar(cigar, tstart - 1)
@@ -287,6 +287,18 @@ def final_worker(infile, select=None):
 			else:
 				ref_cov[target][idx] = 1
 	return barcode_id, sample_id, int(timepoint), ref_cov
+
+
+def parse_final_observed_file(infile):
+	ret = {}
+	with open(infile, 'r') as f:
+		data = f.read().split('\n')
+		for line in data:
+			if not line:
+				continue
+			barcode, genome = line.split('\t')
+			ret[barcode] = genome
+	return ret
 
 
 parser = argparse.ArgumentParser('sam_parser.py')
@@ -343,9 +355,9 @@ if __name__ == '__main__':
 
 		write_coverage(barcode_to_ref_cov, this_sam_parser.ref_len, barcode_to_sample_id, args.output_cov)
 	else:
-
+		best_genomes = parse_final_observed_file(args.final)
 		pool = mp.Pool(processes=args.threads)
-		final_worker_target = partial(final_worker, select=args.final)
+		final_worker_target = partial(final_worker, select=best_genomes)
 		res = pool.map(final_worker_target, sam_file_list)
 		pool.close()
 		pool.join()
