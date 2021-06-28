@@ -22,6 +22,7 @@ class SamParser(object):
 		self.aln_regex = None
 		if aln_scores:
 			self.aln_regex = re.compile(r'AS:i:([0-9]+)\t')
+			self.dp_regex = re.compile(r'ms:i:([0-9]+)\t')
 		self.sam_path = sam_path
 		self.ref_len = {}
 		self.output_handle = None
@@ -77,7 +78,10 @@ class SamParser(object):
 		else:
 			self.reverse = False
 		if self.aln_regex:
-			self.aln_score = int(self.aln_regex.search(self.line).group(1))
+			try:
+				self.aln_score = int(self.aln_regex.search(self.line).group(1))
+			except AttributeError:
+				self.aln_score = int(self.dp_regex.search(self.line).group(1))
 		else:
 			self.aln_score = None
 		self.line = self.handle.readline()
