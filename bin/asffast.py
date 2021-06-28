@@ -175,7 +175,6 @@ def report_intermediate_coverage(infile, n=3):
 
 	ordered_keys = sorted(data_dict.keys())
 	for barcode in ordered_keys:
-		intermediate_best_genomes[barcode] = data_dict[barcode][0]
 		sys.stdout.write('{}: {}\n'.format(
 			barcode,
 			data_dict[barcode][0]
@@ -192,6 +191,8 @@ def report_intermediate_coverage(infile, n=3):
 				bar_col = '\u001b[43m'  # 43 = bg yellow
 			else:
 				bar_col = '\u001b[42m'  # 42 = bg green
+			if i == 0:
+				intermediate_best_genomes[barcode] = target
 			count = int(math.floor(BAR_LENGTH * percent_cov / 100))
 			short_target = target.split('|')[-1].rstrip('_')
 			second_gap = int(max(1, (TERMINAL_LENGTH - len(short_target) - BAR_LENGTH)))
