@@ -149,7 +149,7 @@ process CoverageAnalysisFinal {
 		file("*coverage_plots.pdf")
 
 	when:
-		final_info != 'NONE_F'
+		params.final_info != 'NONE_F'
 
 	"""
 	echo "$file_list" > list_of_inputs.txt
