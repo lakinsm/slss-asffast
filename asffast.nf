@@ -57,7 +57,7 @@ process PlotMinknowMetadata {
 		final_info != 'NONE_F'
 
 	script:
-		if( (thrfile.name != 'NONE_T') && (seqfile.name != 'NONE_S') )
+		if( (params.throughput != 'NONE_T') && (params.sequencing != 'NONE_S') )
 			"""
 			plot_nanopore_metadata.py $seqfile $thrfile .
 			"""

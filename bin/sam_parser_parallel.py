@@ -279,8 +279,9 @@ def final_worker(infile, select=None):
 	timepoint = infile.split('/')[-1].replace('.sam', '').split('_')[-1]
 	sam_parser = SamParser(infile)
 	for query, _, target, tstart, cigar, _ in sam_parser:
-		if select and (select[barcode_id] != target):
-			continue
+		if select:
+			if select[barcode_id] != target:
+				continue
 		read_score = score_cigar(cigar, tstart - 1)
 		idxs = parse_cigar(cigar, tstart - 1)
 		top_read, top_idx_dict = read_cache.smart_insert(query, target, read_score, idxs)
