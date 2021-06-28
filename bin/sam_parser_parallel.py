@@ -238,7 +238,7 @@ def worker(infile):
 		top_read, top_idx_dict = read_cache.smart_insert(qheader, target, read_score, idxs)
 		if top_read:
 			for this_target, top_idxs in top_idx_dict.items():
-				if target not in ref_cov:
+				if this_target not in ref_cov:
 					ref_cov[this_target] = set()
 				for idx in top_idxs:
 					ref_cov[this_target].add(idx)
