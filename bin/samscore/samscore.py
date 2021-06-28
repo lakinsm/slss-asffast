@@ -47,6 +47,8 @@ class SamParser(object):
 					db_seq_len = int(entries[2].split(':')[-1])
 					self.ref_len[db_header] = db_seq_len
 				self.line = self.handle.readline()
+				if not self.line:
+					break
 
 	def __iter__(self):
 		return self
