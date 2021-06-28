@@ -7,7 +7,6 @@ if( params.help ) {
 reference_db = file(params.db)
 threads = params.threads
 forks = params.forks
-final_info = params.final_info
 out_prefix = params.out_prefix
 
 
@@ -26,6 +25,13 @@ if( params.sequencing != 'NONE_S' ) {
 else {
 	sequencing_qc = params.sequencing
 	sequencing_cov = params.sequencing
+}
+
+if( params.final_info != 'NONE_F') {
+	final_info = Channel.fromPath("$params.final_info")
+}
+else {
+	final_info = params.final_info
 }
 
 Channel
@@ -143,7 +149,7 @@ process CoverageAnalysisFinal {
 
 	input:
 		val(file_list) from final_coverage_data1.mix(final_coverage_data2).toList()
-		file(final_info)
+		file final_file from final_info.collect()
 	output:
 		file("coverage_results.csv") into (cov_res)
 		file("*coverage_plots.pdf")
@@ -160,7 +166,7 @@ process CoverageAnalysisFinal {
 	-op coverage_plots.pdf \
 	-r \
 	--threads $forks \
-	--final $final_info
+	--final $final_file
 
 	merge_fasta_files.py .
 	"""
