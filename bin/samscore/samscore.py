@@ -224,5 +224,15 @@ def score_cigar(s, t_idx, match=2, mismatch=-4, indel_start=-2, indel_extend=-1)
 
 if __name__ == '__main__':
 	sam_parser = SamParser(sys.argv[1])
+	read_cache = ReadScoreCache()
 	for header, rev, thead, tstart, cigar, aln_score in sam_parser:
-		sys.stdout.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(header, rev, thead, tstart, cigar, aln_score))
+		cigar_score = score_cigar(cigar, tstart - 1)
+		aln_idxs = parse_cigar(cigar, tstart - 1)
+		top_read, top_idx_dict = read_cache.smart_insert(header, thead, cigar_score, aln_idxs)
+		if top_read:
+			for target, top_idxs in top_idx_dict.items():
+				sys.stdout.write('{}\t{}\n'.format(target, len(top_idxs)))
+
+	_, final_idx_dict = read_cache.finalize()
+	for target, final_idxs in final_idx_dict.items():
+		sys.stdout.write('{}\t{}\n'.format(target, len(final_idxs)))

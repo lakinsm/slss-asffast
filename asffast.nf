@@ -143,6 +143,7 @@ process CoverageAnalysisFinal {
 
 	input:
 		val(file_list) from final_coverage_data1.mix(final_coverage_data2).toList()
+		file(final_info)
 	output:
 		file("coverage_results.csv") into (cov_res)
 		file("*coverage_plots.pdf")
@@ -159,7 +160,7 @@ process CoverageAnalysisFinal {
 	-op coverage_plots.pdf \
 	-r \
 	--threads $forks \
-	--final
+	--final $final_info
 
 	merge_fasta_files.py .
 	"""
