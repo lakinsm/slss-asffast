@@ -140,16 +140,17 @@ class ReadScoreCache(object):
 		return self._top()
 
 
-def parse_cigar(s, t_idx):
+def parse_cigar(s, start_idx):
 	"""
 	Parse SAM CIGAR alignment string and return indices to which the read aligned.
 	:param s: STR, CIGAR string
-	:param t_idx: INT, zero-based index for target start position
+	:param start_idx: INT, zero-based index for target start position
 	:return: tuple of integers, zero-indexed indices to which the read aligned
 	"""
 	ret = ()
 	num = ''
 	c_idx = 0
+	t_idx = start_idx
 	while c_idx < len(s):
 		if s[c_idx].isdigit():
 			num += s[c_idx]

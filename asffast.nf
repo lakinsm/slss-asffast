@@ -28,10 +28,12 @@ else {
 }
 
 if( params.final_info != 'NONE_F') {
-	final_info = Channel.fromPath("$params.final_info")
+	final_info_cov = Channel.fromPath("$params.final_info")
+	final_info_merge = Channel.fromPath("$params.final_info")
 }
 else {
-	final_info = params.final_info
+	final_info_cov = params.final_info
+	final_info_merge = params.final_info
 }
 
 Channel
@@ -54,7 +56,7 @@ process PlotMinknowMetadata {
 		file("throughput_timeseries_graph.pdf")
 
 	when:
-		final_info != 'NONE_F'
+		params.final_info != 'NONE_F'
 
 	script:
 		if( (params.throughput != 'NONE_T') && (params.sequencing != 'NONE_S') )
@@ -135,7 +137,7 @@ process CoverageAnalysisIntermediate {
 		file("coverage_results.csv")
 
 	when:
-		final_info == 'NONE_F'
+		params.final_info == 'NONE_F'
 
 	"""
 	echo "$file_list" > list_of_inputs.txt
@@ -149,7 +151,7 @@ process CoverageAnalysisFinal {
 
 	input:
 		val(file_list) from final_coverage_data1.mix(final_coverage_data2).toList()
-		file final_file from final_info.collect()
+		file final_file from final_info_cov.collect()
 	output:
 		file("coverage_results.csv") into (cov_res)
 		file("*coverage_plots.pdf")
@@ -178,15 +180,16 @@ process MergeAlignedSamFiles {
 
 	input:
 		val(file_list) from final_data1.mix(final_data2).toList()
+		file final_file from final_info_merge.collect()
 	output:
 		file("*aligned_reads.sam") into (consensus_sam, alignment_curves)
 
 	when:
-		final_info != 'NONE_F'
+		params.final_info != 'NONE_F'
 
 	"""
 	echo "$file_list" > list_of_inputs.txt
-	merge_sam_files.py list_of_inputs.txt
+	merge_sam_files.py list_of_inputs.txt final_file
 	"""
 }
 
@@ -202,7 +205,7 @@ process PlotAlignmentCurves {
 		file("*alignment_timeseries_data.csv")
 
 	when:
-		final_info != 'NONE_F'
+		params.final_info != 'NONE_F'
 
 	script:
 		if( seqfile.name != 'NONE_S' )
@@ -227,7 +230,7 @@ process ProduceConsensus {
 		file("*_consensus.fasta")
 
 	when:
-		final_info != 'NONE_F'
+		params.final_info != 'NONE_F'
 
 	script:
 		def this_barcode = getBarcode(sam.name).findAll().first()[1]
