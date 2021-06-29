@@ -325,10 +325,8 @@ if __name__ == '__main__':
 			else:
 				nextflow_arglist += ['-with-singularity', SINGULARITY_LIB_PATH]
 			if args.slurm:
-				if barcode_flag:
-					nextflow_arglist[13] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
-				else:
-					nextflow_arglist[12] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
+				config_file_idx = nextflow_arglist.index('-config') + 1
+				nextflow_arglist[config_file_idx] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 			p = subprocess.Popen([str(x) for x in nextflow_arglist])
 			exit_code = p.wait()
 			sys.stdout.write('\n')
@@ -417,10 +415,8 @@ if __name__ == '__main__':
 	else:
 		nextflow_arglist += ['-with-singularity', SINGULARITY_LIB_PATH]
 	if args.slurm:
-		if barcode_flag:
-			nextflow_arglist[14] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
-		else:
-			nextflow_arglist[13] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
+		config_file_idx = nextflow_arglist.index('-config') + 1
+		nextflow_arglist[config_file_idx] = nextflow_path.replace('asffast.nf', SLURM_CONFIG)
 	if globstar_sequencing_path and globstar_througput_path:
 		nextflow_arglist += ['--throughput', globstar_througput_path, '--sequencing', globstar_sequencing_path]
 	if args.prefix:
