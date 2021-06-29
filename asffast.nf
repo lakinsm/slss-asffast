@@ -30,10 +30,12 @@ else {
 if( params.final_info != 'NONE_F') {
 	final_info_cov = Channel.fromPath("$params.final_info")
 	final_info_merge = Channel.fromPath("$params.final_info")
+	final_info_consensus = Channel.fromPath("$params.final_info")
 }
 else {
 	final_info_cov = params.final_info
 	final_info_merge = params.final_info
+	final_info_consensus = params.final_info
 }
 
 Channel
@@ -225,6 +227,7 @@ process ProduceConsensus {
 	input:
 		each file(sam) from consensus_sam
 		file(ref) from reference_db
+		file final_file from final_info_consensus.collect()
 	output:
 		file("*.vcf.gz")
 		file("*_consensus.fasta")
@@ -239,7 +242,7 @@ process ProduceConsensus {
 		samtools view -bS $sam | samtools sort - -o ${out_prefix}_${this_barcode}.bam
 		freebayes -p 1 --standard-filters --min-coverage 10 -f $ref ${out_prefix}_${this_barcode}.bam | vcffilter -f "QUAL > 20" | bcftools view -Oz -o ${out_prefix}_${this_barcode}.vcf.gz
 		bcftools index ${out_prefix}_${this_barcode}.vcf.gz
-		cat $ref | bcftools consensus ${out_prefix}_${this_barcode}.vcf.gz > ${out_prefix}_${this_barcode}_consensus.fasta
+		extract_fasta_record.py $ref $final_file ${this_barcode} | bcftools consensus ${out_prefix}_${this_barcode}.vcf.gz > ${out_prefix}_${this_barcode}_consensus.fasta
 		"""
 }
 
