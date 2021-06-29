@@ -210,7 +210,7 @@ process PlotAlignmentCurves {
 		params.final_info != 'NONE_F'
 
 	script:
-		if( seqfile.name != 'NONE_S' )
+		if( params.sequencing != 'NONE_S' )
 			"""
 			plot_alignment_curves.py $sam $seqfile .
 			"""
