@@ -189,7 +189,7 @@ process MergeAlignedSamFiles {
 
 	"""
 	echo "$file_list" > list_of_inputs.txt
-	merge_sam_files.py list_of_inputs.txt final_file
+	merge_sam_files.py list_of_inputs.txt $final_file
 	"""
 }
 
