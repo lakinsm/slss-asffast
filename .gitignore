@@ -7,4 +7,4 @@ work/*
 
 .idea*
 
-
+__pycache__
