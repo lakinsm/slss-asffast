@@ -157,6 +157,8 @@ def get_create_real_dir(inpath):
 
 def report_intermediate_coverage(infile, n=3):
 	intermediate_best_genomes = {}
+	if not os.path.exists(infile):
+		return None
 	end_col = '\u001b[0m'
 	sys.stdout.write('\n{:%Y-%m-%d %H:%M:%S} Coverage Results for Top {} Genomes Per Barcode:\n\n'.format(
 		datetime.now(),
