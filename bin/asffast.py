@@ -242,7 +242,7 @@ def cleanup_result_files(outdir):
 					if file_barcode not in barcodes_present:
 						os.remove(f)
 	if os.path.isdir(outdir + '/FlowcellRunMetadata'):
-		for f in glob.glob(outdir + '/FlowcellRunMetadata'):
+		for f in glob.glob(outdir + '/FlowcellRunMetadata/*'):
 			if os.path.getsize(f) == 0:
 				os.remove(f)
 
