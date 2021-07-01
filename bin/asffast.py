@@ -332,7 +332,7 @@ if __name__ == '__main__':
 			sys.stdout.write('\n')
 			sys.stdout.flush()
 
-			observed_best_genomes = report_intermediate_coverage(args.output + '/CoverageAnalysis/coverage_results.csv')
+			observed_best_genomes = report_intermediate_coverage(args.output + '/CoverageAnalysis/intermediate_coverage_results.csv')
 
 			files_present = this_file_counter
 			watch_timer = 0

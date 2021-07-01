@@ -124,14 +124,14 @@ process CoverageAnalysisIntermediate {
 	input:
 		val(file_list) from coverage_data1.mix(coverage_data2).toList()
 	output:
-		file("coverage_results.csv")
+		file("intermediate_coverage_results.csv")
 
 	when:
 		params.final_info == 'NONE_F'
 
 	"""
 	echo "$file_list" > list_of_inputs.txt
-	sam_parser_parallel.py -i list_of_inputs.txt -oc coverage_results.csv --threads $forks
+	sam_parser_parallel.py -i list_of_inputs.txt -oc intermediate_coverage_results.csv --threads $forks
 	"""
 }
 
@@ -143,8 +143,8 @@ process CoverageAnalysisFinal {
 		val(file_list) from final_coverage_data1.mix(final_coverage_data2).toList()
 		file final_file from final_info_cov.collect()
 	output:
-		file("coverage_results.csv") into (cov_res)
-		file("*coverage_plots.pdf")
+		file("final_coverage_results.csv") into (cov_res)
+		file("final_coverage_plots.pdf")
 
 	when:
 		params.final_info != 'NONE_F'
@@ -154,13 +154,11 @@ process CoverageAnalysisFinal {
 
 	sam_parser_parallel.py \
 	-i list_of_inputs.txt \
-	-oc coverage_results.csv \
-	-op coverage_plots.pdf \
+	-oc final_coverage_results.csv \
+	-op final_coverage_plots.pdf \
 	-r \
 	--threads $forks \
 	--final $final_file
-
-	merge_fasta_files.py .
 	"""
 }
 
