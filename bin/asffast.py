@@ -211,6 +211,42 @@ def report_intermediate_coverage(infile, n=3):
 	return intermediate_best_genomes
 
 
+def parse_final_coverage_file(infile):
+	ret = set()
+	with open(infile, 'r') as f:
+		data = f.read().split('\n')
+	for line in data:
+		if not line:
+			continue
+		entries = line.split(',')
+		ret.add(entries[0])
+	return ret
+
+
+def cleanup_result_files(outdir):
+	if os.path.isdir(outdir + '/ConsensusSequences'):
+		for f in glob.glob(outdir + '/ConsensusSequences/*.fasta'):
+			if os.path.getsize(f) == 0:
+				os.remove(f)
+	if os.path.isdir(outdir + '/CoverageAnalysis'):
+		final_cov_file_path = outdir + '/CoverageAnalysis/final_coverage_results.csv'
+		if os.path.exists(final_cov_file_path):
+			barcodes_present = parse_final_coverage_file(final_cov_file_path)
+			for f in glob.glob(outdir + '/CoverageAnalysis/*_final_coverage_plots.pdf'):
+				file_barcode = f.split('/')[-1].split('_')[0]
+				if file_barcode not in barcodes_present:
+					os.remove(f)
+			if os.path.isdir(outdir + '/ConsensusSequences'):
+				for f in glob.glob(outdir + '/ConsensusSequences/*.vcf.gz'):
+					file_barcode = f.split('/')[-1].split('_')[1].replace('.vcf.gz', '')
+					if file_barcode not in barcodes_present:
+						os.remove(f)
+	if os.path.isdir(outdir + '/FlowcellRunMetadata'):
+		for f in glob.glob(outdir + '/FlowcellRunMetadata'):
+			if os.path.getsize(f) == 0:
+				os.remove(f)
+
+
 parser = argparse.ArgumentParser('asffast.py')
 parser.add_argument('-i', '--input', type=str, default=None, required=True,
 					help='Existing input root data directory for ONT sequencing run (must contain the desired sample name)')
@@ -434,3 +470,5 @@ if __name__ == '__main__':
 	exit_code = p.wait()
 	sys.stdout.write('\n')
 	sys.stdout.flush()
+
+	cleanup_result_files(outdir=os.path.realpath(args.output))
