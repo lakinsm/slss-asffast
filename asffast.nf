@@ -13,29 +13,17 @@ out_prefix = params.out_prefix
 if( params.throughput != 'NONE_T' ) {
 	throughput = Channel.fromPath("$params.throughput")
 }
-else {
-	throughput = params.throughput
-}
 
 
 if( params.sequencing != 'NONE_S' ) {
 	sequencing_qc = Channel.fromPath("$params.sequencing")
 	sequencing_cov = Channel.fromPath("$params.sequencing")
 }
-else {
-	sequencing_qc = params.sequencing
-	sequencing_cov = params.sequencing
-}
 
 if( params.final_info != 'NONE_F') {
 	final_info_cov = Channel.fromPath("$params.final_info")
 	final_info_merge = Channel.fromPath("$params.final_info")
 	final_info_consensus = Channel.fromPath("$params.final_info")
-}
-else {
-	final_info_cov = params.final_info
-	final_info_merge = params.final_info
-	final_info_consensus = params.final_info
 }
 
 Channel
@@ -207,18 +195,12 @@ process PlotAlignmentCurves {
 		file("*alignment_timeseries_data.csv")
 
 	when:
-		params.final_info != 'NONE_F'
+		(params.final_info != 'NONE_F') && (params.sequencing != 'NONE_S')
 
 	script:
-		if( params.sequencing != 'NONE_S' )
-			"""
-			plot_alignment_curves.py $sam $seqfile .
-			"""
-		else
-			"""
-			touch alignment_timeseries_graph.pdf
-			touch alignment_timeseries_data.csv
-			"""
+		"""
+		plot_alignment_curves.py $sam $seqfile .
+		"""
 }
 
 
