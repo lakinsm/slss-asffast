@@ -346,6 +346,12 @@ if __name__ == '__main__':
 	# Start final Nextflow run with genomic subset of reference
 	sys.stdout.write('Beginning final Nextflow run...\n\n')
 
+	# Handle edge case of no aligned reads detected for any barcode/samples
+	if not observed_best_genomes:
+		sys.stdout.write('No aligned reads detected for any barcodes/samples.  Run complete.\n\n')
+
+	# TODO: write a summary report function listing preliminary outputs for every barcode, present or not
+
 	# Write best observed genomes for each barcode to file
 	obs_genome_filepath = nextflow_work_dir + '/observed_best_genomes.txt'
 	with open(obs_genome_filepath, 'w') as obs:

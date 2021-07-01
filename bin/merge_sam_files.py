@@ -8,6 +8,7 @@ def parse_sam(infile, outfile, select=None, headers=False):
 	Screen input Sequence Alignment Map (SAM) file and output to stdout to merge all input SAM files.
 	:param infile: STR, file path to input SAM file
 	:param outfile: STR, file path to output SAM file in append mode
+	:param select: STR, exact FASTA header (without leading >) of reference genome to keep from SAM file
 	:param headers: BOOL, include header information in output
 	:return: None
 	"""
@@ -51,8 +52,12 @@ if __name__ == '__main__':
 	for sam_file in sam_file_list:
 		barcode = sam_file.split('/')[-1].split('_')[0]
 		out_file_path = '{}_aligned_reads.sam'.format(barcode)
+		if barcode in best_genomes:
+			selected_genome = best_genomes[barcode]
+		else:
+			selected_genome = None
 		if barcode not in headers_written:
-			parse_sam(sam_file, out_file_path, select=best_genomes[barcode], headers=True)
+			parse_sam(sam_file, out_file_path, select=selected_genome, headers=True)
 			headers_written.add(barcode)
 		else:
-			parse_sam(sam_file, out_file_path, select=best_genomes[barcode])
+			parse_sam(sam_file, out_file_path, select=selected_genome)
