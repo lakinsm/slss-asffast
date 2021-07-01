@@ -157,7 +157,7 @@ process CoverageAnalysisFinal {
 		file final_file from final_info_cov.collect()
 	output:
 		file("final_coverage_results.csv") into (cov_res)
-		file("final_coverage_plots.pdf")
+		file("*final_coverage_plots.pdf")
 
 	when:
 		params.final_info != 'NONE_F'
