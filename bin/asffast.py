@@ -351,6 +351,7 @@ if __name__ == '__main__':
 	# Handle edge case of no aligned reads detected for any barcode/samples
 	if not observed_best_genomes:
 		sys.stdout.write('No aligned reads detected for any barcodes/samples.  Run complete.\n\n')
+		sys.exit(0)
 
 	# TODO: write a summary report function listing preliminary outputs for every barcode, present or not
 
